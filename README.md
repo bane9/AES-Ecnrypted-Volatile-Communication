@@ -1,2 +1,2 @@
-# AES Ecnrypted Volatile Communication
+# AES Encrypted Volatile Communication
  

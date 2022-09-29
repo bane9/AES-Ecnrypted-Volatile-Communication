@@ -1,0 +1,23 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--max-line-length=110",
+        "--disable=C0103"
+    ],
+
+    "python.testing.unittestEnabled": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+
+    "cSpell.languageSettings": [
+        {
+            "languageId": "python",
+            "includeRegExpList": [
+                "/#.*/",
+               "/('''|\"\"\")[^\\1]+?\\1/g",
+                "strings"
+            ]
+        },
+    ]
+}

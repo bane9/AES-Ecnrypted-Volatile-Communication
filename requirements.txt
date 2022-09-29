@@ -1,0 +1,5 @@
+cryptography==38.0.1
+matplotlib==3.6.0
+numpy==1.23.3
+pylint==2.15.3
+pytest==7.1.3
