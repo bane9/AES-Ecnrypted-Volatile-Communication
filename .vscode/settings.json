@@ -15,7 +15,7 @@
             "languageId": "python",
             "includeRegExpList": [
                 "/#.*/",
-               "/('''|\"\"\")[^\\1]+?\\1/g",
+                "/('''|\"\"\")[^\\1]+?\\1/g",
                 "strings"
             ]
         },

@@ -38,7 +38,6 @@ def aes_algorithms_test():
         assert decrypted == PLAIN_TEXT
 
         # Double pass
-
         print(f"Testing {algorithm.__name__} double pass")
 
         aes: AES = algorithm(mode=AES_ECB.AES_MODE.ENCRYPTOR)
