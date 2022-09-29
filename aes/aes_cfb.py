@@ -25,7 +25,7 @@ class AES_CFB(AES):
         super().__init__(key, iv, None, mode)
 
     def set_mode(self, mode: AES.AES_MODE):
-        """Set the AES mode to either Encrypor or Decryptor.
+        """Set the AES mode to either Encryptor or Decryptor.
 
         Args:
             mode (AES_MODE): AES mode.

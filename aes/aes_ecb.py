@@ -22,7 +22,7 @@ class AES_ECB(AES):
         super().__init__(key, None, None, mode)
 
     def set_mode(self, mode: AES.AES_MODE):
-        """Set the AES mode to either Encrypor or Decryptor.
+        """Set the AES mode to either Encryptor or Decryptor.
 
         Args:
             mode (AES_MODE): AES mode.
