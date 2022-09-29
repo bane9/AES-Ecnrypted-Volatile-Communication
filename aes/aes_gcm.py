@@ -31,7 +31,7 @@ class AES_GCM(AES):
         self.tag: bytes = tag
 
     def set_mode(self, mode: AES.AES_MODE):
-        """Set the AES mode to either Encrypor or Decryptor.
+        """Set the AES mode to either Encryptor or Decryptor.
 
         Args:
             mode (AES_MODE): AES mode.

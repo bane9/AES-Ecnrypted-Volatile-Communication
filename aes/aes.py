@@ -71,7 +71,7 @@ class AES(ABC):
 
     @abstractmethod
     def set_mode(self, mode: AES_MODE):
-        """Set the AES mode to either Encrypor or Decryptor.
+        """Set the AES mode to either Encryptor or Decryptor.
 
         Args:
             mode (AES_MODE): AES mode.
