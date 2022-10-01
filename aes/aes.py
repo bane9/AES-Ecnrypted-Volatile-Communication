@@ -119,6 +119,12 @@ class AES(ABC):
 
         return self.data
 
+    def reset(self):
+        """Resets the current instance of the class.
+        """
+
+        self.set_mode(self.mode)
+
     @classmethod
     def generate_secure_key(cls) -> bytes:
         """Generate an AES key with byte length equal to AES.AES_BYTE_LENGTH.
