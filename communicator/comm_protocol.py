@@ -33,13 +33,15 @@ class Transmitter:
         self.fields_on_init = aes_fields_on_init
         self.fields_on_tx = aes_fields_on_tx
 
+        self.data_size_padded = len(self.data_to_transmit) + (len(self.data_to_transmit) % AES.AES_BIT_LENGTH)
+
         if self.fields_on_init is None:
             self.fields_on_init = []
 
         if self.fields_on_tx is None:
             self.fields_on_tx = []
 
-    def init(self):
+    def reset(self):
         """_summary_
         """
 
@@ -68,13 +70,14 @@ class Transmitter:
             dict[str, bytes]: _description_
         """
 
-        if self.data_idx >= len(self.data_to_transmit):
-            return None
-
         chunk_size = AES.AES_BYTE_LENGTH
+
+        if self.data_idx >= self.data_size_padded:
+            return None
 
         data = self.data_to_transmit[self.data_idx : self.data_idx + chunk_size]
 
+        # Pad to AES block length with zero's
         if len(data) < chunk_size:
             data += b"\0" * (chunk_size - len(data))
 
@@ -83,42 +86,23 @@ class Transmitter:
 
         self.aes.reset()
 
+        self.data_idx += len(data)
+
         msg = {"data": data, "chunk": self.data_idx // chunk_size}
 
         for field in self.fields_on_tx:
             msg[field] = getattr(self.aes, field)
 
-        self.data_idx += chunk_size
-
         return msg
 
-    def regen_tx_message(self, chunk: int) -> dict[str, int or bytes] or None:
+    def set_chunk(self, chunk: int):
         """_summary_
 
         Args:
             chunk (int): _description_
-
-        Raises:
-            IndexError: _description_
-
-        Returns:
-            dict[str, int or bytes] or None: _description_
         """
 
-        chunk_size = AES.AES_BYTE_LENGTH
-        idx = chunk_size * chunk
-
-        if idx >= len(self.data_to_transmit):
-            raise IndexError("Supplied chunk index is out of bounds")
-
-        old_idx = self.data_idx
-        self.data_idx = idx
-
-        msg = self.gen_tx_message()
-
-        self.data_idx = old_idx
-
-        return msg
+        self.data_idx = chunk * AES.AES_BYTE_LENGTH
 
 
 class Receiver:
@@ -154,11 +138,11 @@ class Receiver:
             if message:
                 self.message += " Additional info: " + message
 
-            super().__init__(message)
+            super().__init__(self.message)
 
     def __init__(self,
                  aes: AES,
-                 data_received_cb: Callable[[bytes, bytes, int, int], None],
+                 data_received_cb: Callable[[bytes, bytes, int], None],
                  error_protocol: RxFailureException.ErrorProtocol = None,
                  aes_fields_on_init: list[str] = None,
                  aes_fields_on_rx: list[str] = None):
@@ -166,7 +150,7 @@ class Receiver:
 
         Args:
             aes (AES): _description_
-            data_received_cb (Callable[[bytes, bytes, int, int]]): _description_
+            data_received_cb (Callable[[bytes, bytes, int]]): _description_
             error_protocol (RxFailureException.ErrorProtocol, optional): _description_. Defaults to None.
             aes_fields_on_init (list[str], optional): _description_. Defaults to None.
             aes_fields_on_rx (list[str], optional): _description_. Defaults to None.
@@ -188,7 +172,7 @@ class Receiver:
         if self.fields_on_rx is None:
             self.fields_on_rx = []
 
-    def init(self):
+    def reset(self):
         """_summary_
         """
 
@@ -211,6 +195,8 @@ class Receiver:
         for field in self.fields_on_init:
             setattr(self.aes, field, init_msg[field])
 
+        self.aes.reset()
+
     def on_data_rx(self, rx_data: dict[str, int or bytes]):
         """_summary_
 
@@ -222,7 +208,7 @@ class Receiver:
             Receiver.RxFailureException: _description_
         """
 
-        if self.current_chunk + 1 < rx_data["chunk"]:
+        if self.current_chunk + 1 != rx_data["chunk"]:
             raise Receiver.RxFailureException(self.error_protocol, self.current_chunk + 1, "Missing chunk")
 
         for field in self.fields_on_rx:
@@ -237,14 +223,17 @@ class Receiver:
         if not data:
             raise Receiver.RxFailureException(self.error_protocol, rx_data["chunk"], "Decryption failure")
 
+        # Remove final padding, if any
+        if len(self.received_data) + len(data) > self.data_size_to_receive:
+            data = data[:(len(self.received_data) + len(data)) - self.data_size_to_receive]
+
         self.received_data += data
         self.current_chunk += 1
 
         if self.data_received_cb is not None:
-            current_bytes = len(self.received_data)
             bytes_remaining = self.data_size_to_receive - len(self.received_data)
 
-            self.data_received_cb(self.received_data, data, current_bytes, bytes_remaining)
+            self.data_received_cb(self.received_data, data, bytes_remaining)
 
 class TxRxPair:
     """_summary_
@@ -263,12 +252,12 @@ class TxRxPair:
 
 
 def init_aes_txrx_pairs(data_to_transmit: bytes,
-                        data_rx_cb: Callable[[bytes, bytes, int, int], None] = None) -> dict[str, TxRxPair]:
+                        data_rx_cb: Callable[[bytes, bytes, int], None] = None) -> dict[str, TxRxPair]:
     """_summary_
 
     Args:
         data_to_transmit (bytes): _description_
-        data_rx_cb (Callable[[bytes, bytes, int, int], None], optional): _description_. Defaults to None.
+        data_rx_cb (Callable[[bytes, bytes, int], None], optional): _description_. Defaults to None.
 
     Returns:
         dict[str, TxRxPair]: _description_
