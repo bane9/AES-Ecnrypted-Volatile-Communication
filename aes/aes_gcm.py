@@ -27,8 +27,8 @@ class AES_GCM(AES):
             mode (AES.AES_MODE, optional): Sets the state of the AES instance. Defaults to AES_MODE.ENCRYPTOR.
         """
 
-        super().__init__(key, iv, nonce, mode)
         self.tag: bytes = tag
+        super().__init__(key, iv, nonce, mode)
 
     def set_mode(self, mode: AES.AES_MODE):
         """Set the AES mode to either Encryptor or Decryptor.
@@ -52,12 +52,14 @@ class AES_GCM(AES):
         Returns:
             bytes: finalized data.
         """
-        finalized = super().finalize()
 
         if self.mode == AES.AES_MODE.ENCRYPTOR:
+            self.data += self.context.finalize()
             self.tag = self.context.tag
+        else:
+            self.context.finalize_with_tag(self.tag)
 
-        return finalized
+        return self.data
 
     def set_tag(self, tag: bytes):
         """Set the tag for the GCM instance.

@@ -84,14 +84,14 @@ class Transmitter:
         self.aes.update(data)
         data = self.aes.finalize()
 
-        self.aes.reset()
-
         self.data_idx += len(data)
 
         msg = {"data": data, "chunk": self.data_idx // chunk_size}
 
         for field in self.fields_on_tx:
             msg[field] = getattr(self.aes, field)
+
+        self.aes.reset()
 
         return msg
 
@@ -289,6 +289,64 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.REINIT,
             aes_fields_on_init=["iv"]
+        )
+    )
+
+    out["cfb"] = TxRxPair(
+        Transmitter(
+            aes=AES_CFB(key=key, mode=AES.AES_MODE.ENCRYPTOR),
+            data_to_transmit=data_to_transmit,
+            aes_fields_on_init=["iv"]
+        ),
+        Receiver(
+            aes=AES_CFB(key=key, mode=AES.AES_MODE.DECRYPTOR),
+            data_received_cb=data_rx_cb,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["iv"]
+        )
+    )
+
+    out["ctr"] = TxRxPair(
+        Transmitter(
+            aes=AES_CTR(key=key, mode=AES.AES_MODE.ENCRYPTOR),
+            data_to_transmit=data_to_transmit,
+            aes_fields_on_init=["nonce"]
+        ),
+        Receiver(
+            aes=AES_CTR(key=key, mode=AES.AES_MODE.DECRYPTOR),
+            data_received_cb=data_rx_cb,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["nonce"]
+        )
+    )
+
+    out["ofb"] = TxRxPair(
+        Transmitter(
+            aes=AES_OFB(key=key, mode=AES.AES_MODE.ENCRYPTOR),
+            data_to_transmit=data_to_transmit,
+            aes_fields_on_init=["iv"]
+        ),
+        Receiver(
+            aes=AES_OFB(key=key, mode=AES.AES_MODE.DECRYPTOR),
+            data_received_cb=data_rx_cb,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["iv"]
+        )
+    )
+
+    out["gcm"] = TxRxPair(
+        Transmitter(
+            aes=AES_GCM(key=key, mode=AES.AES_MODE.ENCRYPTOR),
+            data_to_transmit=data_to_transmit,
+            aes_fields_on_init=["iv", "nonce"],
+            aes_fields_on_tx=["tag"]
+        ),
+        Receiver(
+            aes=AES_GCM(key=key, mode=AES.AES_MODE.DECRYPTOR),
+            data_received_cb=data_rx_cb,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["iv", "nonce"],
+            aes_fields_on_rx=["tag"]
         )
     )
 
