@@ -104,9 +104,7 @@ class AES(ABC):
             bytes: processed data.
         """
 
-        self.data += self.context.update(data)
-
-        return self.data
+        return self.context.update(data)
 
     def finalize(self) -> bytes:
         """AES context finalization.
@@ -115,9 +113,7 @@ class AES(ABC):
             bytes: finalized data.
         """
 
-        self.data += self.context.finalize()
-
-        return self.data
+        return self.context.finalize()
 
     def reset(self):
         """Resets the current instance of the class.

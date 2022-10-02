@@ -35,6 +35,8 @@ class Transmitter:
 
         self.data_size_padded = ((len(data_to_transmit) // AES.AES_BYTE_LENGTH) + 1) * AES.AES_BYTE_LENGTH
 
+        self.encrypted_data: bytes = None
+
         if self.fields_on_init is None:
             self.fields_on_init = []
 
@@ -48,12 +50,21 @@ class Transmitter:
         self.aes.reset()
         self.data_idx = 0
 
+        self.encrypted_data = self.data_to_transmit
+        self.encrypted_data += b"0" * (self.data_size_padded - len(self.encrypted_data))
+
+        self.encrypted_data = self.aes.update(self.encrypted_data) + self.aes.finalize()
+
+        assert len(self.encrypted_data) == self.data_size_padded
+
     def gen_init_message(self) -> dict[str, int or str or bytes]:
         """_summary_
 
         Returns:
             dict[str, int or str or bytes]: _description_
         """
+
+        self.reset()
 
         msg = {"message_size": len(self.data_to_transmit),
                "chunks": len(self.data_to_transmit) // AES.AES_BYTE_LENGTH}
@@ -75,14 +86,7 @@ class Transmitter:
         if self.data_idx > self.data_size_padded:
             raise IndexError("No more data to transmit")
 
-        data = self.data_to_transmit[self.data_idx : self.data_idx + chunk_size]
-
-        # Pad to AES block length with zero's
-        if len(data) < chunk_size:
-            data += b"\0" * (chunk_size - len(data))
-
-        self.aes.update(data)
-        data = self.aes.finalize()
+        data = self.encrypted_data[self.data_idx : self.data_idx + chunk_size]
 
         self.data_idx += len(data)
 
@@ -90,8 +94,6 @@ class Transmitter:
 
         for field in self.fields_on_tx:
             msg[field] = getattr(self.aes, field)
-
-        self.aes.reset()
 
         return msg
 
@@ -216,14 +218,13 @@ class Receiver:
         for field in self.fields_on_rx:
             setattr(self.aes, field, rx_data[field])
 
-        try:
-            self.aes.update(rx_data["data"])
-            data = self.aes.finalize()
-        finally:
-            self.aes.reset()
+        data = self.aes.update(rx_data["data"])
 
         if not data:
             raise Receiver.RxFailureException(self.error_protocol, rx_data["chunk"], "Decryption failure")
+
+        if len(self.received_data) + len(rx_data["data"]) >= self.data_size_to_receive:
+            data += self.aes.finalize()
 
         self.received_data += data
         self.received_data_encrypted += rx_data["data"]

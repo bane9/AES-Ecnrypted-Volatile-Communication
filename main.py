@@ -7,9 +7,9 @@ def main():
     """AES Encrypted Volatile Communication entry point.
     """
 
-    message_message_fail_rate_percent = 0.000
+    message_message_fail_rate_percent = 0.02
 
-    aes_modes_to_test = ["cbc"]
+    aes_modes_to_test = []
 
     comm = Communicator(message_fail_rate_percent=message_message_fail_rate_percent,
                         aes_modes_to_test=aes_modes_to_test)
