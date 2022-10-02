@@ -4,6 +4,7 @@
 import random
 from aes import AES
 from summarizer import Summarizer, Visualizer
+from image_helper import ImageHelper
 from .comm_protocol import Receiver, TxRxPair, init_aes_txrx_pairs
 
 
@@ -12,24 +13,29 @@ class Communicator:
     """
 
     def __init__(self,
-                 data_to_transfer: bytes,
+                 path_to_image = "",
                  aes_modes_to_test: list[str] = None,
                  message_fail_rate_percent = 1.0):
         """_summary_
 
         Args:
-            data_to_transfer (bytes): _description_
+            path_to_image (str, optional): _description_. Defaults to "".
             aes_modes_to_test (list[str], optional): _description_. Defaults to None.
-            message_fail_rate_percent (float, optional): _description_. Defaults to 5.0.
+            message_fail_rate_percent (float, optional): _description_. Defaults to 1.0.
         """
 
         assert 0 <= message_fail_rate_percent <= 100
 
         self.message_fail_percent = int(message_fail_rate_percent * 1000)
         self.message_fail_count = 0
-        self.data_to_transfer = data_to_transfer
-        self.tx_rx_pairs = init_aes_txrx_pairs(data_to_transfer, self.on_data_rx)
+        if path_to_image:
+            self.original_image = ImageHelper.load_image(path_to_image, True)
+        else:
+            self.original_image = ImageHelper.get_default_image()
+        self.data_to_transfer = ImageHelper.image_to_bytes(self.original_image)
+        self.tx_rx_pairs = init_aes_txrx_pairs(self.data_to_transfer, self.on_data_rx)
         self.finished = False
+        self.current_aes_mode_idx = 0
 
         if not aes_modes_to_test:
             self.aes_modes_to_test = [*self.tx_rx_pairs.keys()]
@@ -58,6 +64,18 @@ class Communicator:
         if remaining_bytes_to_receive == 0:
             if all_received_data != self.data_to_transfer:
                 raise ValueError("Received data does not match the provided data")
+
+            enc_image = self.tx_rx_pairs[self.aes_modes_to_test[self.current_aes_mode_idx]]
+            enc_image = enc_image.receiver.received_data_encrypted
+
+            img_path = f"{self.aes_modes_to_test[self.current_aes_mode_idx]}/encrypted.png"
+
+            ImageHelper.save_bytes_as_image(enc_image,
+                                            img_path,
+                                            self.original_image.width,
+                                            self.original_image.height,
+                                            len(self.original_image.mode))
+
             self.finished = True
 
     def test_aes_modes(self):
@@ -68,6 +86,8 @@ class Communicator:
         while i < len(self.aes_modes_to_test):
             print("\n\nTesting AES mode:", self.aes_modes_to_test[i].upper(),
                   ", bit width:", AES.AES_BIT_LENGTH)
+
+            self.current_aes_mode_idx = i
 
             Summarizer.start(self.aes_modes_to_test[i])
             self.message_fail_count = 0

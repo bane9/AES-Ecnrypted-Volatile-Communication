@@ -33,7 +33,7 @@ class Transmitter:
         self.fields_on_init = aes_fields_on_init
         self.fields_on_tx = aes_fields_on_tx
 
-        self.data_size_padded = len(self.data_to_transmit) + (len(self.data_to_transmit) % AES.AES_BIT_LENGTH)
+        self.data_size_padded = ((len(data_to_transmit) // AES.AES_BYTE_LENGTH) + 1) * AES.AES_BYTE_LENGTH
 
         if self.fields_on_init is None:
             self.fields_on_init = []
@@ -72,8 +72,8 @@ class Transmitter:
 
         chunk_size = AES.AES_BYTE_LENGTH
 
-        if self.data_idx >= self.data_size_padded:
-            return None
+        if self.data_idx > self.data_size_padded:
+            raise IndexError("No more data to transmit")
 
         data = self.data_to_transmit[self.data_idx : self.data_idx + chunk_size]
 
@@ -158,6 +158,7 @@ class Receiver:
 
         self.aes = aes
         self.received_data = bytes()
+        self.received_data_encrypted = bytes()
         self.data_received_cb = data_received_cb
         self.data_size_to_receive = 0
         self.chunks_to_receive = 0
@@ -178,6 +179,7 @@ class Receiver:
 
         self.aes.reset()
         self.received_data = bytes()
+        self.received_data_encrypted = bytes()
         self.data_size_to_receive = 0
         self.chunks_to_receive = 0
         self.current_chunk = 0
@@ -223,12 +225,13 @@ class Receiver:
         if not data:
             raise Receiver.RxFailureException(self.error_protocol, rx_data["chunk"], "Decryption failure")
 
-        # Remove final padding, if any
-        if len(self.received_data) + len(data) > self.data_size_to_receive:
-            data = data[:(len(self.received_data) + len(data)) - self.data_size_to_receive]
-
         self.received_data += data
+        self.received_data_encrypted += rx_data["data"]
         self.current_chunk += 1
+
+        # Remove final padding, if any
+        if len(self.received_data) > self.data_size_to_receive:
+            self.received_data = self.received_data[:self.data_size_to_receive]
 
         if self.data_received_cb is not None:
             bytes_remaining = self.data_size_to_receive - len(self.received_data)
