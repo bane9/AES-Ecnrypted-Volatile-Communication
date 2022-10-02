@@ -3,7 +3,7 @@
 
 import random
 from aes import AES
-from summarizer import Summarizer
+from summarizer import Summarizer, Visualizer
 from .comm_protocol import Receiver, TxRxPair, init_aes_txrx_pairs
 
 
@@ -94,6 +94,8 @@ class Communicator:
                     Summarizer.on_connection_reset()
                     self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
                     self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
+
+        Visualizer.generate_comparative_plot()
 
     def _test_aes_mode(self, txrx_pair: TxRxPair) -> bool:
         """_summary_

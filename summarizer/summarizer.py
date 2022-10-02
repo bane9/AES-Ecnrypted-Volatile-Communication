@@ -165,7 +165,7 @@ class Summarizer:
         if fail_rate:
             plot_title += f" Packet fail rate: {fail_rate:.2f}%."
 
-        Visualizer.end(plot_title)
+        Visualizer.end(plot_title, f"Fail rate {fail_rate:.2f}%")
 
 
     @classmethod
