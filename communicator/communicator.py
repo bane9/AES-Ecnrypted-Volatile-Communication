@@ -3,6 +3,7 @@
 
 import random
 from aes import AES
+from summarizer import Summarizer
 from .comm_protocol import Receiver, TxRxPair, init_aes_txrx_pairs
 
 
@@ -35,7 +36,7 @@ class Communicator:
         else:
             self.aes_modes_to_test = aes_modes_to_test
 
-    def on_data_rx(self, all_received_data: bytes, received_chunk: bytes,
+    def on_data_rx(self, all_received_data: bytes, _: bytes,
                    remaining_bytes_to_receive: int):
         """_summary_
 
@@ -47,8 +48,6 @@ class Communicator:
         Raises:
             ValueError: _description_
         """
-
-        all_received_data.__eq__(received_chunk)
 
         if len(all_received_data) % ((len(self.data_to_transfer) * 0.05)) == 0:
             percent_left = len(all_received_data) / (len(all_received_data) + remaining_bytes_to_receive)
@@ -69,6 +68,9 @@ class Communicator:
         while i < len(self.aes_modes_to_test):
             print("\n\nTesting AES mode:", self.aes_modes_to_test[i].upper(),
                   ", bit width:", AES.AES_BIT_LENGTH)
+
+            Summarizer.start(self.aes_modes_to_test[i])
+
             self.finished = False
             self.message_fail_count = 0
             res = self._test_aes_mode(self.tx_rx_pairs[self.aes_modes_to_test[i]])
@@ -82,10 +84,13 @@ class Communicator:
                  f"({self.aes_modes_to_test[i].upper()})",
                  f"\nMessage fail rate: {message_fail_rate}%")
 
-            self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
-            self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
-
-            i += res
+            if res:
+                Summarizer.end()
+                i += 1
+            else:
+                Summarizer.on_connection_reset()
+                self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
+                self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
 
     def _test_aes_mode(self, txrx_pair: TxRxPair) -> bool:
         """_summary_
@@ -106,8 +111,10 @@ class Communicator:
 
                 if random.randint(0, 100_000) < self.message_fail_percent:
                     print("Dropping chunk", msg["chunk"])
+                    Summarizer.on_dropped_packet()
                     continue
 
+                Summarizer.on_packet_transmit()
                 txrx_pair.receiver.on_data_rx(msg)
 
             except Receiver.RxFailureException as e:
@@ -118,6 +125,9 @@ class Communicator:
                     return False
 
                 print("Re-requesting chunk", e.chunk)
+
+                Summarizer.on_packet_re_request()
+
                 txrx_pair.transmitter.set_chunk(e.chunk - 1)
 
                 msg = txrx_pair.transmitter.gen_tx_message()
