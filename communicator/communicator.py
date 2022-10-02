@@ -117,8 +117,8 @@ class Communicator:
                     Summarizer.on_dropped_packet()
                     continue
 
-                Summarizer.on_packet_transmit()
                 txrx_pair.receiver.on_data_rx(msg)
+                Summarizer.on_packet_transmit()
 
             except Receiver.RxFailureException as e:
                 self.message_fail_count += 1
