@@ -55,7 +55,8 @@ class Summarizer:
 
         cls.current_aes_mode = aes_mode
         cls.events[cls.current_aes_mode] = []
-        cls.started_at = time.perf_counter_ns()
+        cls.started_at = time.perf_counter()
+
 
     @classmethod
     def _new_evt(cls, event_type: "Summarizer.EventType"):
@@ -174,4 +175,4 @@ class Summarizer:
             float: _description_
         """
 
-        return time.perf_counter_ns() - cls.started_at
+        return time.perf_counter() - cls.started_at

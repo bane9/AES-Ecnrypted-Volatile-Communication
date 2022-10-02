@@ -1,14 +1,15 @@
 """AES Encrypted Volatile Communication main file.
 """
 
+import os
 from communicator import Communicator
 
 def main():
     """AES Encrypted Volatile Communication entry point.
     """
 
-    data_to_transfer = b"1" * 1_000_00
-    message_message_fail_rate_percent = .055
+    data_to_transfer = os.urandom(1_000_00)
+    message_message_fail_rate_percent = 0.05
 
     aes_modes_to_test = []
 

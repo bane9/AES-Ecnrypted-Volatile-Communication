@@ -113,7 +113,7 @@ class Visualizer:
         if plot_title:
             ax.set_title(plot_title)
 
-        ax.set_xlabel("Time since stream start [ns]")
+        ax.set_xlabel("Time since stream start [s]")
         ax.axes.get_yaxis().set_visible(False)
 
         with open(os.path.dirname(cls.save_path) + "/figure.pickle", "wb") as F:
