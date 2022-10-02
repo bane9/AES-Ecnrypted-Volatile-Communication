@@ -32,7 +32,7 @@ class Visualizer:
         cls.data["evt_end"] = []
         cls.data["evt_name"] = []
         cls.data["evt_color_map"] = {}
-    
+
     @classmethod
     def add_all_event_names(cls, event_names: list[str]):
         """_summary_
@@ -108,10 +108,13 @@ class Visualizer:
 
         handles = []
 
-        for k, v in color_map.items():
-            k = k.replace("_", " ").title()
+        available_events = set(events)
 
-            handles.append(mlines.Line2D([], [], color=v, label=k))
+        for k, v in color_map.items():
+            if k in available_events:
+                k = k.replace("_", " ").title()
+
+                handles.append(mlines.Line2D([], [], color=v, label=k))
 
         ax.legend(handles=handles, loc="upper center", ncol=len(color_map), bbox_to_anchor=(0.5, 1.1),
                   fancybox=True, shadow=True)
