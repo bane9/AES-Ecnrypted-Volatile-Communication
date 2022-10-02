@@ -5,6 +5,7 @@ import os
 from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 import matplotlib.lines as mlines
+from matplotlib.figure import figaspect
 
 
 class Visualizer:
@@ -41,16 +42,28 @@ class Visualizer:
             event_name (str): _description_
         """
 
+        available_colors = (
+            "tab:blue",
+            "tab:orange",
+            "tab:green",
+            "tab:red",
+            "tab:purple",
+            "tab:brown",
+        )
+
         cls.data["evt_start"].append(event_begin)
         cls.data["evt_end"].append(event_end)
         cls.data["evt_name"].append(event_name)
 
         if event_name not in cls.data["evt_color_map"]:
-            cls.data["evt_color_map"][event_name] = f"C{len(cls.data['evt_color_map'])}"
+            cls.data["evt_color_map"][event_name] = available_colors[len(cls.data['evt_color_map'])]
 
     @classmethod
-    def end(cls):
+    def end(cls, plot_title=""):
         """_summary_
+
+        Args:
+            plot_title (str, optional): _description_. Defaults to "".
         """
 
         os.makedirs(os.path.dirname(cls.save_path), exist_ok=True)
@@ -63,9 +76,12 @@ class Visualizer:
         verticies = []
         colors = []
 
-        vert_side = 0.4
+        vert_side = 0.1
 
-        for start_, end_, evt_name in zip(start, end, events):
+        for start_, end_, evt_name, i in zip(start, end, events, range(len(end))):
+            if i + 1 < len(end):
+                end_ = end[i + 1]
+
             vert = [(start_, -vert_side),
                     (start_, vert_side),
                     (end_, vert_side),
@@ -77,7 +93,7 @@ class Visualizer:
 
         bars = PolyCollection(verticies, facecolors=colors)
 
-        _, ax = plt.subplots()
+        _, ax = plt.subplots(figsize=figaspect(9 / 20))
         ax.add_collection(bars)
         ax.autoscale()
 
@@ -88,7 +104,15 @@ class Visualizer:
 
             handles.append(mlines.Line2D([], [], color=v, label=k))
 
-        ax.legend(handles=handles, loc="upper center", ncol=len(color_map), bbox_to_anchor=(0.5, 1.05),
+        ax.legend(handles=handles, loc="upper center", ncol=len(color_map), bbox_to_anchor=(0.5, 1.1),
                   fancybox=True, shadow=True)
 
-        plt.show()
+        plt.rcParams['axes.titley'] = 1.1
+
+        if plot_title:
+            ax.set_title(plot_title)
+
+        ax.set_xlabel("Time since stream start [ns]")
+        ax.axes.get_yaxis().set_visible(False)
+
+        plt.savefig(cls.save_path, dpi=300, bbox_inches='tight')

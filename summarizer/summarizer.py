@@ -1,28 +1,17 @@
 """_summary_
 """
 
-import os
 from enum import Enum, unique
 import time
 import datetime
 import pickle
 from .visualizer import Visualizer
 
-def get_current_time() -> float:
-    """_summary_
-
-    Returns:
-        float: _description_
-    """
-
-    return time.time()
-
 class Summarizer:
     """_summary_
     """
 
-    SAVE_FOLDER = os.path.dirname(__file__) + "/"
-    SAVE_FOLDER += "output/" + datetime.datetime.now().strftime("%H-%M-%S %d.%m.%Y")
+    SAVE_FOLDER = "output/" + datetime.datetime.now().strftime("%H-%M-%S %d.%m.%Y")
 
     @unique
     class EventType(Enum):
@@ -32,7 +21,7 @@ class Summarizer:
         BEGIN = 0
         END = 1
         PACKET_DROP = 2
-        PACKET_RE_REQUEST = 3
+        PACKET_RETRANSMIT = 3
         CONNECTION_RESET = 4
         PACKET_TRANSMIT = 5
 
@@ -50,13 +39,14 @@ class Summarizer:
                 additional_data (str, optional): _description_. Defaults to "".
             """
 
-            self.timestamp = self.timestamp if timestamp is not None else get_current_time()
+            self.timestamp = self.timestamp if timestamp is not None else Summarizer.get_current_time()
             self.end_timestamp = 0
             self.event_type = event_type
             self.additional_data = additional_data
 
     current_aes_mode: str
     events: dict[str, list[Event]] = {}
+    started_at: float
 
     @classmethod
     def start(cls, aes_mode: str):
@@ -65,6 +55,7 @@ class Summarizer:
 
         cls.current_aes_mode = aes_mode
         cls.events[cls.current_aes_mode] = []
+        cls.started_at = time.perf_counter_ns()
 
     @classmethod
     def _new_evt(cls, event_type: "Summarizer.EventType"):
@@ -79,7 +70,7 @@ class Summarizer:
         if evt_list:
             last_evt = evt_list[-1]
 
-            last_evt.end_timestamp = get_current_time()
+            last_evt.end_timestamp = cls.get_current_time()
 
             if last_evt.event_type != event_type:
                 evt_list.append(cls.Event(event_type))
@@ -91,7 +82,7 @@ class Summarizer:
         """_summary_
         """
 
-        # cls._new_evt(cls.EventType.BEGIN)
+        cls._new_evt(cls.EventType.BEGIN)
 
     @classmethod
     def on_dropped_packet(cls):
@@ -101,11 +92,11 @@ class Summarizer:
         cls._new_evt(cls.EventType.PACKET_DROP)
 
     @classmethod
-    def on_packet_re_request(cls):
+    def on_packet_retransmit(cls):
         """_summary_
         """
 
-        cls._new_evt(cls.EventType.PACKET_RE_REQUEST)
+        cls._new_evt(cls.EventType.PACKET_RETRANSMIT)
 
     @classmethod
     def on_connection_reset(cls):
@@ -122,29 +113,34 @@ class Summarizer:
         cls._new_evt(cls.EventType.PACKET_TRANSMIT)
 
     @classmethod
-    def end(cls):
+    def end(cls, fail_rate: float = None):
         """_summary_
         """
 
-        # cls._new_evt(cls.EventType.END)
+        cls._new_evt(cls.EventType.END)
 
-        cls._draw_timeline()
+        cls._draw_timeline(fail_rate)
         cls.serialize()
 
     @classmethod
-    def _draw_timeline(cls):
+    def _draw_timeline(cls, fail_rate: float or None):
         """_summary_
         """
 
         Visualizer.begin(cls.SAVE_FOLDER + "/" + cls.current_aes_mode)
 
         event_list = cls.events[cls.current_aes_mode]
-        event_list[-1].end_timestamp = get_current_time()
+        event_list[-1].end_timestamp = cls.get_current_time()
 
         for event in cls.events[cls.current_aes_mode]:
             Visualizer.add_event(event.timestamp, event.end_timestamp, event.event_type.name)
 
-        Visualizer.end()
+        plot_title = "AES mode: " + cls.current_aes_mode.upper() + "."
+
+        if fail_rate is not None:
+            plot_title += f" Packet fail rate: {fail_rate:.2f}%."
+
+        Visualizer.end(plot_title)
 
 
     @classmethod
@@ -168,4 +164,14 @@ class Summarizer:
 
         for key in cls.events:
             cls.current_aes_mode = key
-            cls._draw_timeline()
+            cls._draw_timeline(None)
+
+    @classmethod
+    def get_current_time(cls) -> float:
+        """_summary_
+
+        Returns:
+            float: _description_
+        """
+
+        return time.perf_counter_ns() - cls.started_at

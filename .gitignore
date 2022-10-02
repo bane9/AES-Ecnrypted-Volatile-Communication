@@ -152,4 +152,4 @@ cython_debug/
 #.idea/
 
 # Output of the visualiser class
-summarizer/output/
+output/

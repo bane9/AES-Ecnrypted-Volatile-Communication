@@ -8,9 +8,9 @@ def main():
     """
 
     data_to_transfer = b"1" * 1_000_00
-    message_message_fail_rate_percent = 15
+    message_message_fail_rate_percent = .05
 
-    aes_modes_to_test = ["ecb"]
+    aes_modes_to_test = []
 
     comm = Communicator(data_to_transfer=data_to_transfer,
                         message_fail_rate_percent=message_message_fail_rate_percent,

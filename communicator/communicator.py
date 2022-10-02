@@ -85,7 +85,7 @@ class Communicator:
                  f"\nMessage fail rate: {message_fail_rate}%")
 
             if res:
-                Summarizer.end()
+                Summarizer.end(message_fail_rate)
                 i += 1
             else:
                 Summarizer.on_connection_reset()
@@ -126,7 +126,7 @@ class Communicator:
 
                 print("Re-requesting chunk", e.chunk)
 
-                Summarizer.on_packet_re_request()
+                Summarizer.on_packet_retransmit()
 
                 txrx_pair.transmitter.set_chunk(e.chunk - 1)
 
