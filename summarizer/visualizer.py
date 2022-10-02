@@ -32,15 +32,13 @@ class Visualizer:
         cls.data["evt_end"] = []
         cls.data["evt_name"] = []
         cls.data["evt_color_map"] = {}
-
+    
     @classmethod
-    def add_event(cls, event_begin: int, event_end: int, event_name: str):
+    def add_all_event_names(cls, event_names: list[str]):
         """_summary_
 
         Args:
-            event_begin (int): _description_
-            event_end (int): _description_
-            event_name (str): _description_
+            event_names (list[str]): _description_
         """
 
         available_colors = (
@@ -52,12 +50,22 @@ class Visualizer:
             "tab:brown",
         )
 
+        for i, x in enumerate(event_names):
+            cls.data["evt_color_map"][x] = available_colors[i]
+
+    @classmethod
+    def add_event(cls, event_begin: int, event_end: int, event_name: str):
+        """_summary_
+
+        Args:
+            event_begin (int): _description_
+            event_end (int): _description_
+            event_name (str): _description_
+        """  
+
         cls.data["evt_start"].append(event_begin)
         cls.data["evt_end"].append(event_end)
         cls.data["evt_name"].append(event_name)
-
-        if event_name not in cls.data["evt_color_map"]:
-            cls.data["evt_color_map"][event_name] = available_colors[len(cls.data['evt_color_map'])]
 
     @classmethod
     def end(cls, plot_title=""):

@@ -130,6 +130,15 @@ class Summarizer:
 
         Visualizer.begin(cls.SAVE_FOLDER + "/" + cls.current_aes_mode)
 
+        evt_names = [
+            cls.EventType.PACKET_TRANSMIT.name,
+            cls.EventType.PACKET_DROP.name,
+            cls.EventType.PACKET_RETRANSMIT.name,
+            cls.EventType.CONNECTION_RESET.name
+        ]
+
+        Visualizer.add_all_event_names(evt_names)
+
         event_list = cls.events[cls.current_aes_mode]
         event_list[-1].end_timestamp = cls.get_current_time()
 
