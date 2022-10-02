@@ -174,8 +174,8 @@ class AES(ABC):
             cls.CIPHER_ALGORITHM = algorithms.AES256
         else:
             raise ValueError(f"Invalid AES bit length configuration {bit_length}. "
-                            "Supported bit lengths are 128 and 256.")
+                             "Supported bit lengths are 128 and 256.")
 
         cls.AES_BIT_LENGTH = bit_length
 
-AES.set_bit_length(128)
+AES.set_bit_length(256)

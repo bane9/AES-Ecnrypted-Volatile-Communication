@@ -48,7 +48,7 @@ class Summarizer:
     events: dict[str, list[Event]] = {}
     started_at: float
 
-    BUSY_WAIT_AMOUNT_MS = 1.0
+    BUSY_WAIT_AMOUNT_MS = 0.0
 
     @classmethod
     def start(cls, aes_mode: str):
@@ -84,6 +84,9 @@ class Summarizer:
     def _busy_wait(cls):
         """_summary_
         """
+
+        if not cls.BUSY_WAIT_AMOUNT_MS:
+            return
 
         delay = time.perf_counter() + cls.BUSY_WAIT_AMOUNT_MS / 1000
 

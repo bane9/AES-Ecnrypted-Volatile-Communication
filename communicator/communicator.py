@@ -70,10 +70,10 @@ class Communicator:
                   ", bit width:", AES.AES_BIT_LENGTH)
 
             Summarizer.start(self.aes_modes_to_test[i])
+            self.message_fail_count = 0
 
             while True:
                 self.finished = False
-                self.message_fail_count = 0
                 res = self._test_aes_mode(self.tx_rx_pairs[self.aes_modes_to_test[i]])
 
                 message_fail_rate = \
@@ -95,7 +95,9 @@ class Communicator:
                     self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
                     self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
 
-        Visualizer.generate_comparative_plot()
+        Visualizer.generate_comparative_plot(f"AES bit length: {AES.AES_BIT_LENGTH} bits\n"
+                                             f"Transmitted data size: {len(self.data_to_transfer)} bytes\n"
+                                             f"Set fail rate: {self.message_fail_percent / 1000}%")
 
     def _test_aes_mode(self, txrx_pair: TxRxPair) -> bool:
         """_summary_

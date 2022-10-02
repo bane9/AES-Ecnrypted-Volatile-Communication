@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 import matplotlib.lines as mlines
 from matplotlib.figure import figaspect
-import numpy as np
+from sortedcontainers import SortedDict
 
 
 class Visualizer:
@@ -153,14 +153,17 @@ class Visualizer:
         plt.savefig(cls.save_path, dpi=300, bbox_inches='tight')
 
     @classmethod
-    def generate_comparative_plot(cls):
+    def generate_comparative_plot(cls, additional_data=""):
         """_summary_
+
+        Args:
+            additional_data (str, optional): _description_. Defaults to "".
         """
 
         path = os.path.dirname(cls.save_path)
         path = os.path.join(path, "../")
 
-        data_list: dict[str, float or str] = {}
+        data_list: SortedDict[str, float or str] = SortedDict()
 
         for root, subdirs, _ in os.walk(path):
             for directory in subdirs:
@@ -217,10 +220,12 @@ class Visualizer:
 
         ax.axes.get_yaxis().set_visible(False)
 
-        time_diffs = [(x["evt_end"][-1] - x["evt_start"][0]) for x in data_list.values()]
+        xlabel = "Time since stream start [s]."
 
-        ax.set_xlabel(f"Time since stream start [s].\nDuration mean {np.mean(time_diffs):.2f}s"
-                      f"\nDuration median {np.median(time_diffs):.2f}s")
+        if additional_data:
+            xlabel += "\n\n" + additional_data
+
+        ax.set_xlabel(xlabel)
 
         ax.autoscale()
 
