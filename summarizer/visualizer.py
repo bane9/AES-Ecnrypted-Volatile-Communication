@@ -199,10 +199,16 @@ class Visualizer:
 
         handles = []
 
-        for k, v in data_list[aes]["evt_color_map"].items():
-            k = k.replace("_", " ").title()
+        event_types = set(data_list[aes]["evt_name"])
 
-            handles.append(mlines.Line2D([], [], color=v, label=k))
+        for x in data_list.values():
+            event_types.update(x["evt_name"])
+
+        for k, v in data_list[aes]["evt_color_map"].items():
+            if k in event_types:
+                k = k.replace("_", " ").title()
+
+                handles.append(mlines.Line2D([], [], color=v, label=k))
 
         ax.legend(handles=handles, loc="upper center",
                   ncol=len(data_list[aes]["evt_color_map"]),
