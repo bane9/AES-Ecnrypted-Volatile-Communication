@@ -82,7 +82,7 @@ class Summarizer:
         """_summary_
         """
 
-        cls._new_evt(cls.EventType.BEGIN)
+        # cls._new_evt(cls.EventType.BEGIN)
 
     @classmethod
     def on_dropped_packet(cls):
@@ -117,7 +117,7 @@ class Summarizer:
         """_summary_
         """
 
-        cls._new_evt(cls.EventType.END)
+        # cls._new_evt(cls.EventType.END)
 
         cls._draw_timeline(fail_rate)
         cls.serialize()
@@ -137,7 +137,7 @@ class Summarizer:
 
         plot_title = "AES mode: " + cls.current_aes_mode.upper() + "."
 
-        if fail_rate is not None:
+        if fail_rate:
             plot_title += f" Packet fail rate: {fail_rate:.2f}%."
 
         Visualizer.end(plot_title)

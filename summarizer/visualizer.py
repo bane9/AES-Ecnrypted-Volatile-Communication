@@ -2,6 +2,7 @@
 """
 
 import os
+import pickle
 from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 import matplotlib.lines as mlines
@@ -114,5 +115,8 @@ class Visualizer:
 
         ax.set_xlabel("Time since stream start [ns]")
         ax.axes.get_yaxis().set_visible(False)
+
+        with open(os.path.dirname(cls.save_path) + "/figure.pickle", "wb") as F:
+            pickle.dump(plt.gcf(), F)
 
         plt.savefig(cls.save_path, dpi=300, bbox_inches='tight')

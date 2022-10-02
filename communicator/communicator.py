@@ -71,26 +71,29 @@ class Communicator:
 
             Summarizer.start(self.aes_modes_to_test[i])
 
-            self.finished = False
-            self.message_fail_count = 0
-            res = self._test_aes_mode(self.tx_rx_pairs[self.aes_modes_to_test[i]])
+            while True:
+                self.finished = False
+                self.message_fail_count = 0
+                res = self._test_aes_mode(self.tx_rx_pairs[self.aes_modes_to_test[i]])
 
-            message_fail_rate = self.message_fail_count / (len(self.data_to_transfer) // AES.AES_BYTE_LENGTH)
+                message_fail_rate = \
+                    self.message_fail_count / (len(self.data_to_transfer) // AES.AES_BYTE_LENGTH)
 
-            message_fail_rate = round(message_fail_rate * 100, 4)
+                message_fail_rate = round(message_fail_rate * 100, 4)
 
-            print("Test",
-                 "passed" if res else "failed",
-                 f"({self.aes_modes_to_test[i].upper()})",
-                 f"\nMessage fail rate: {message_fail_rate}%")
+                print("Test",
+                    "passed" if res else "failed",
+                    f"({self.aes_modes_to_test[i].upper()})",
+                    f"\nMessage fail rate: {message_fail_rate}%")
 
-            if res:
-                Summarizer.end(message_fail_rate)
-                i += 1
-            else:
-                Summarizer.on_connection_reset()
-                self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
-                self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
+                if res:
+                    Summarizer.end(message_fail_rate)
+                    i += 1
+                    break
+                else:
+                    Summarizer.on_connection_reset()
+                    self.tx_rx_pairs[self.aes_modes_to_test[i]].transmitter.reset()
+                    self.tx_rx_pairs[self.aes_modes_to_test[i]].receiver.reset()
 
     def _test_aes_mode(self, txrx_pair: TxRxPair) -> bool:
         """_summary_

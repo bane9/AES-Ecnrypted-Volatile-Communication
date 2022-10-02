@@ -8,7 +8,7 @@ def main():
     """
 
     data_to_transfer = b"1" * 1_000_00
-    message_message_fail_rate_percent = .05
+    message_message_fail_rate_percent = .055
 
     aes_modes_to_test = []
 
