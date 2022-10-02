@@ -61,7 +61,7 @@ class Visualizer:
             event_begin (int): _description_
             event_end (int): _description_
             event_name (str): _description_
-        """  
+        """
 
         cls.data["evt_start"].append(event_begin)
         cls.data["evt_end"].append(event_end)
@@ -85,19 +85,19 @@ class Visualizer:
         verticies = []
         colors = []
 
-        vert_side = 0.1
+        vert_side = 0.5
 
         for start_, end_, evt_name, i in zip(start, end, events, range(len(end))):
             if i + 1 < len(end):
                 end_ = end[i + 1]
 
-            vert = [(start_, -vert_side),
-                    (start_, vert_side),
-                    (end_, vert_side),
-                    (end_, -vert_side),
-                    (start_, -vert_side)]
+            vertex = [(start_, -vert_side),
+                      (start_, vert_side),
+                      (end_, vert_side),
+                      (end_, -vert_side),
+                      (start_, -vert_side)]
 
-            verticies.append(vert)
+            verticies.append(vertex)
             colors.append(color_map[evt_name])
 
         bars = PolyCollection(verticies, facecolors=colors)

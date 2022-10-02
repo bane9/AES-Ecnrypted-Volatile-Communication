@@ -48,6 +48,8 @@ class Summarizer:
     events: dict[str, list[Event]] = {}
     started_at: float
 
+    BUSY_WAIT_AMOUNT_MS = 1.0
+
     @classmethod
     def start(cls, aes_mode: str):
         """_summary_
@@ -79,6 +81,16 @@ class Summarizer:
             evt_list.append(cls.Event(event_type))
 
     @classmethod
+    def _busy_wait(cls):
+        """_summary_
+        """
+
+        delay = time.perf_counter() + cls.BUSY_WAIT_AMOUNT_MS / 1000
+
+        while time.perf_counter() < delay:
+            pass
+
+    @classmethod
     def on_begin(cls):
         """_summary_
         """
@@ -91,6 +103,7 @@ class Summarizer:
         """
 
         cls._new_evt(cls.EventType.PACKET_DROP)
+        cls._busy_wait()
 
     @classmethod
     def on_packet_retransmit(cls):
@@ -98,6 +111,7 @@ class Summarizer:
         """
 
         cls._new_evt(cls.EventType.PACKET_RETRANSMIT)
+        cls._busy_wait()
 
     @classmethod
     def on_connection_reset(cls):
@@ -105,6 +119,7 @@ class Summarizer:
         """
 
         cls._new_evt(cls.EventType.CONNECTION_RESET)
+        cls._busy_wait()
 
     @classmethod
     def on_packet_transmit(cls):
