@@ -3,6 +3,7 @@
 
 from enum import Enum, unique
 from typing import Callable
+
 from aes import AES
 from aes import AES_ECB
 from aes import AES_CBC
@@ -201,33 +202,16 @@ class Receiver:
 
         self.aes.reset()
 
-    def on_data_rx(self, rx_data: dict[str, int or bytes]):
+    def _append_data(self, data: bytes, data_encrypted: bytes):
         """_summary_
 
         Args:
-            rx_data (dict[str, int or bytes]): _description_
-
-        Raises:
-            Receiver.RxFailureException: _description_
-            Receiver.RxFailureException: _description_
+            data (bytes): _description_
+            data_encrypted (bytes): _description_
         """
 
-        if self.current_chunk + 1 != rx_data["chunk"]:
-            raise Receiver.RxFailureException(self.error_protocol, self.current_chunk + 1, "Missing chunk")
-
-        for field in self.fields_on_rx:
-            setattr(self.aes, field, rx_data[field])
-
-        data = self.aes.update(rx_data["data"])
-
-        if not data:
-            raise Receiver.RxFailureException(self.error_protocol, rx_data["chunk"], "Decryption failure")
-
-        if len(self.received_data) + len(rx_data["data"]) >= self.data_size_to_receive:
-            data += self.aes.finalize()
-
         self.received_data += data
-        self.received_data_encrypted += rx_data["data"]
+        self.received_data_encrypted += data_encrypted
         self.current_chunk += 1
 
         # Remove final padding, if any
@@ -238,6 +222,73 @@ class Receiver:
             bytes_remaining = self.data_size_to_receive - len(self.received_data)
 
             self.data_received_cb(self.received_data, data, bytes_remaining)
+
+    def _recover_by_padding(self, rx_data: dict[str, int or bytes], already_decrypted: bool):
+        """_summary_
+
+        Args:
+            rx_data (dict[str, int or bytes]): _description_
+            already_decrypted (bool): _description_
+        """
+        chunks_missing = rx_data["chunk"] - self.current_chunk
+        last_chunk = self.current_chunk + chunks_missing == self.data_size_to_receive // AES.AES_BYTE_LENGTH
+
+        zerod_chunk = b"0" * AES.AES_BYTE_LENGTH
+
+        if already_decrypted:
+            self._append_data(zerod_chunk, zerod_chunk)
+            return
+
+        for i in range(chunks_missing):
+            if i < chunks_missing - 1:
+                self.aes.update(zerod_chunk)
+                self._append_data(zerod_chunk, zerod_chunk)
+            else:
+                decrypted = self.aes.update(rx_data["data"])
+
+                if last_chunk:
+                    decrypted += self.aes.finalize()
+
+                self._append_data(decrypted, rx_data["data"])
+
+    def on_data_rx(self, rx_data: dict[str, int or bytes], pad_on_failure=False):
+        """_summary_
+
+        Args:
+            rx_data (dict[str, int or bytes]): _description_
+            pad_on_failure (bool, optional): _description_. Defaults to False.
+
+        Raises:
+            Receiver.RxFailureException: _description_
+            Receiver.RxFailureException: _description_
+        """
+
+        try:
+            if self.current_chunk + 1 != rx_data["chunk"]:
+                raise Receiver.RxFailureException(self.error_protocol, self.current_chunk + 1)
+
+            for field in self.fields_on_rx:
+                setattr(self.aes, field, rx_data[field])
+
+            data = self.aes.update(rx_data["data"])
+
+            if len(self.received_data) + len(rx_data["data"]) >= self.data_size_to_receive:
+                data += self.aes.finalize()
+
+            if not data:
+                if pad_on_failure:
+                    self._recover_by_padding(rx_data, True)
+                else:
+                    raise Receiver.RxFailureException(self.error_protocol, rx_data["chunk"])
+
+            self._append_data(data, rx_data["data"])
+        except Receiver.RxFailureException as e:
+            if not pad_on_failure or e.error_protocol == Receiver.RxFailureException.ErrorProtocol.REINIT:
+                raise
+
+            self._recover_by_padding(rx_data, False)
+
+            raise
 
 class TxRxPair:
     """_summary_
@@ -348,7 +399,7 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
         Receiver(
             aes=AES_GCM(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
-            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.REINIT,
             aes_fields_on_init=["iv", "nonce"],
             aes_fields_on_rx=["tag"]
         )

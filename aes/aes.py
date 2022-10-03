@@ -174,4 +174,4 @@ class AES(ABC):
 
         cls.AES_BIT_LENGTH = bit_length
 
-AES.set_bit_length(128)
+AES.set_bit_length(256)

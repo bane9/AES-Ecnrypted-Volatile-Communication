@@ -30,7 +30,7 @@ class ImageHelper:
         os.makedirs(Summarizer.SAVE_FOLDER, exist_ok=True)
 
         if copy_to_output_folder:
-            img.save(os.path.join(Summarizer.SAVE_FOLDER, "loaded_image.png"))
+            img.save(os.path.join(Summarizer.SAVE_FOLDER, "loaded_image.png"), subsampling=0, quality=100)
 
         return img
 
@@ -78,4 +78,7 @@ class ImageHelper:
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        Image.fromarray(data).save(path)
+        img = Image.fromarray(data)
+        img.putalpha(255)
+        
+        img.save(path, subsampling=0, quality=100)

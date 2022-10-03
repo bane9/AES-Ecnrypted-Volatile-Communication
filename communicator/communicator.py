@@ -15,13 +15,15 @@ class Communicator:
     def __init__(self,
                  path_to_image = "",
                  aes_modes_to_test: list[str] = None,
-                 message_fail_rate_percent = 1.0):
+                 message_fail_rate_percent = 1.0,
+                 use_retransmition=False):
         """_summary_
 
         Args:
             path_to_image (str, optional): _description_. Defaults to "".
             aes_modes_to_test (list[str], optional): _description_. Defaults to None.
             message_fail_rate_percent (float, optional): _description_. Defaults to 1.0.
+            use_retransmition (bool, optional): _description_. Defaults to False.
         """
 
         assert 0 <= message_fail_rate_percent <= 100
@@ -36,6 +38,8 @@ class Communicator:
         self.tx_rx_pairs = init_aes_txrx_pairs(self.data_to_transfer, self.on_data_rx)
         self.finished = False
         self.current_aes_mode_idx = 0
+
+        self.use_retransmition = use_retransmition
 
         if not aes_modes_to_test:
             self.aes_modes_to_test = [*self.tx_rx_pairs.keys()]
@@ -62,16 +66,20 @@ class Communicator:
                   f"{percent_left:.1f}%")
 
         if remaining_bytes_to_receive == 0:
-            if all_received_data != self.data_to_transfer:
-                raise ValueError("Received data does not match the provided data")
+            receiver = self.tx_rx_pairs[self.aes_modes_to_test[self.current_aes_mode_idx]].receiver
+            enc_image = receiver.received_data_encrypted
 
-            enc_image = self.tx_rx_pairs[self.aes_modes_to_test[self.current_aes_mode_idx]]
-            enc_image = enc_image.receiver.received_data_encrypted
-
-            img_path = f"{self.aes_modes_to_test[self.current_aes_mode_idx]}/encrypted.png"
+            img_path_enc = f"{self.aes_modes_to_test[self.current_aes_mode_idx]}/encrypted.png"
+            img_path_dec = f"{self.aes_modes_to_test[self.current_aes_mode_idx]}/decrypted.png"
 
             ImageHelper.save_bytes_as_image(enc_image,
-                                            img_path,
+                                            img_path_enc,
+                                            self.original_image.width,
+                                            self.original_image.height,
+                                            len(self.original_image.mode))
+
+            ImageHelper.save_bytes_as_image(all_received_data,
+                                            img_path_dec,
                                             self.original_image.width,
                                             self.original_image.height,
                                             len(self.original_image.mode))
@@ -141,7 +149,7 @@ class Communicator:
                     Summarizer.on_dropped_packet()
                     continue
 
-                txrx_pair.receiver.on_data_rx(msg)
+                txrx_pair.receiver.on_data_rx(msg, not self.use_retransmition)
                 Summarizer.on_packet_transmit()
 
             except Receiver.RxFailureException as e:
@@ -151,13 +159,14 @@ class Communicator:
                     print("Data failure requiring re-initialization")
                     return False
 
-                print("Re-requesting chunk", e.chunk)
+                if self.use_retransmition:
+                    print("Re-requesting chunk", e.chunk)
 
-                Summarizer.on_packet_retransmit()
+                    Summarizer.on_packet_retransmit()
 
-                txrx_pair.transmitter.set_chunk(e.chunk - 1)
+                    txrx_pair.transmitter.set_chunk(e.chunk - 1)
 
-                msg = txrx_pair.transmitter.gen_tx_message()
-                txrx_pair.receiver.on_data_rx(msg)
+                    msg = txrx_pair.transmitter.gen_tx_message()
+                    txrx_pair.receiver.on_data_rx(msg)
 
         return True

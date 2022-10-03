@@ -7,7 +7,7 @@ def main():
     """AES Encrypted Volatile Communication entry point.
     """
 
-    message_message_fail_rate_percent = 0.02
+    message_message_fail_rate_percent = 0.03
 
     aes_modes_to_test = []
 
