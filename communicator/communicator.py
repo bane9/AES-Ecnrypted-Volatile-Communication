@@ -16,14 +16,14 @@ class Communicator:
                  path_to_image = "",
                  aes_modes_to_test: list[str] = None,
                  message_fail_rate_percent = 1.0,
-                 use_retransmition=False):
+                 use_retransmission=False):
         """_summary_
 
         Args:
             path_to_image (str, optional): _description_. Defaults to "".
             aes_modes_to_test (list[str], optional): _description_. Defaults to None.
             message_fail_rate_percent (float, optional): _description_. Defaults to 1.0.
-            use_retransmition (bool, optional): _description_. Defaults to False.
+            use_retransmission (bool, optional): _description_. Defaults to False.
         """
 
         assert 0 <= message_fail_rate_percent <= 100
@@ -39,7 +39,7 @@ class Communicator:
         self.finished = False
         self.current_aes_mode_idx = 0
 
-        self.use_retransmition = use_retransmition
+        self.use_retransmition = use_retransmission
 
         if not aes_modes_to_test:
             self.aes_modes_to_test = [*self.tx_rx_pairs.keys()]

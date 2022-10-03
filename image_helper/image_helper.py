@@ -80,5 +80,5 @@ class ImageHelper:
 
         img = Image.fromarray(data)
         img.putalpha(255)
-        
+
         img.save(path, subsampling=0, quality=100)
