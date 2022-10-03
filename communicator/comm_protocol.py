@@ -148,15 +148,17 @@ class Receiver:
                  data_received_cb: Callable[[bytes, bytes, int], None],
                  error_protocol: RxFailureException.ErrorProtocol = None,
                  aes_fields_on_init: list[str] = None,
-                 aes_fields_on_rx: list[str] = None):
+                 aes_fields_on_rx: list[str] = None,
+                 update_cipher_on_packet_drop=True):
         """_summary_
 
         Args:
             aes (AES): _description_
-            data_received_cb (Callable[[bytes, bytes, int]]): _description_
+            data_received_cb (Callable[[bytes, bytes, int], None]): _description_
             error_protocol (RxFailureException.ErrorProtocol, optional): _description_. Defaults to None.
             aes_fields_on_init (list[str], optional): _description_. Defaults to None.
             aes_fields_on_rx (list[str], optional): _description_. Defaults to None.
+            update_cipher_on_packet_drop (bool, optional): _description_. Defaults to True.
         """
 
         self.aes = aes
@@ -169,6 +171,8 @@ class Receiver:
         self.fields_on_init = aes_fields_on_init
         self.fields_on_rx = aes_fields_on_rx
         self.error_protocol = error_protocol
+
+        self.update_cipher_on_packet_drop = update_cipher_on_packet_drop
 
         if self.fields_on_init is None:
             self.fields_on_init = []
@@ -241,7 +245,8 @@ class Receiver:
 
         for i in range(chunks_missing):
             if i < chunks_missing - 1:
-                self.aes.update(zerod_chunk)
+                if self.update_cipher_on_packet_drop:
+                    self.aes.update(zerod_chunk)
                 self._append_data(zerod_chunk, zerod_chunk)
             else:
                 decrypted = self.aes.update(rx_data["data"])
@@ -307,7 +312,8 @@ class TxRxPair:
 
 
 def init_aes_txrx_pairs(data_to_transmit: bytes,
-                        data_rx_cb: Callable[[bytes, bytes, int], None] = None) -> dict[str, TxRxPair]:
+                        data_rx_cb: Callable[[bytes, bytes, int], None] = None,
+                        update_cipher_on_packet_drop: bool = True) -> dict[str, TxRxPair]:
     """_summary_
 
     Args:
@@ -329,7 +335,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
         Receiver(
             aes=AES_ECB(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
-            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 
@@ -342,8 +349,9 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
         Receiver(
             aes=AES_CBC(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
-            error_protocol=Receiver.RxFailureException.ErrorProtocol.REINIT,
-            aes_fields_on_init=["iv"]
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["iv"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 
@@ -357,7 +365,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             aes=AES_CFB(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
-            aes_fields_on_init=["iv"]
+            aes_fields_on_init=["iv"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 
@@ -371,7 +380,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             aes=AES_CTR(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
-            aes_fields_on_init=["nonce"]
+            aes_fields_on_init=["nonce"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 
@@ -385,7 +395,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             aes=AES_OFB(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
-            aes_fields_on_init=["iv"]
+            aes_fields_on_init=["iv"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 
@@ -401,7 +412,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.REINIT,
             aes_fields_on_init=["iv", "nonce"],
-            aes_fields_on_rx=["tag"]
+            aes_fields_on_rx=["tag"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
 

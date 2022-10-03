@@ -48,12 +48,12 @@ class AES(ABC):
         if iv is None:
             iv = self.generate_secure_iv()
         else:
-            assert len(iv) == self.AES_BYTE_LENGTH
+            assert len(iv) == self.AES_IV_BYTE_LENGTH
 
         if nonce is None:
             nonce = self.generate_secure_nonce()
         else:
-            assert len(nonce) == self.AES_BYTE_LENGTH
+            assert len(nonce) == self.AES_NONCE_BYTE_LENGTH
 
         self.key = key
         self.iv = iv

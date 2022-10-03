@@ -141,7 +141,7 @@ class Visualizer:
                   fancybox=True, shadow=True)
 
         if plot_title:
-            plt.rcParams['axes.titley'] = 1.1
+            plt.rcParams["axes.titley"] = 1.1
             ax.set_title(plot_title)
 
         ax.set_xlabel("Time since stream start [s]")
@@ -150,7 +150,7 @@ class Visualizer:
         with open(os.path.dirname(cls.save_path) + "/events.pickle", "wb") as F:
             pickle.dump(cls.data, F)
 
-        plt.savefig(cls.save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(cls.save_path, dpi=300, bbox_inches="tight")
 
     @classmethod
     def generate_comparative_plot(cls, additional_data=""):
@@ -220,7 +220,7 @@ class Visualizer:
 
         ax.axes.get_yaxis().set_visible(False)
 
-        xlabel = "Time since stream start [s]."
+        xlabel = "Time since stream start [s]"
 
         if additional_data:
             xlabel += "\n\n" + additional_data
@@ -229,7 +229,7 @@ class Visualizer:
 
         ax.autoscale()
 
-        plt.rcParams['axes.titley'] = 1.122
+        plt.rcParams["axes.titley"] = 1.122
         ax.set_title("Timeline comparative graph")
 
-        plt.savefig(os.path.join(path, "comparative.png"), dpi=600, bbox_inches='tight')
+        plt.savefig(os.path.join(path, "comparative.png"), dpi=600, bbox_inches="tight")

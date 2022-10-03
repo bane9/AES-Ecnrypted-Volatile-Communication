@@ -16,7 +16,8 @@ class Communicator:
                  path_to_image = "",
                  aes_modes_to_test: list[str] = None,
                  message_fail_rate_percent = 1.0,
-                 use_retransmission=False):
+                 use_retransmission=False,
+                 update_cipher_on_packet_drop=True):
         """_summary_
 
         Args:
@@ -24,6 +25,7 @@ class Communicator:
             aes_modes_to_test (list[str], optional): _description_. Defaults to None.
             message_fail_rate_percent (float, optional): _description_. Defaults to 1.0.
             use_retransmission (bool, optional): _description_. Defaults to False.
+            update_cipher_on_packet_drop (bool, optional): _description_. Defaults to True.
         """
 
         assert 0 <= message_fail_rate_percent <= 100
@@ -35,7 +37,8 @@ class Communicator:
         else:
             self.original_image = ImageHelper.get_default_image()
         self.data_to_transfer = ImageHelper.image_to_bytes(self.original_image)
-        self.tx_rx_pairs = init_aes_txrx_pairs(self.data_to_transfer, self.on_data_rx)
+        self.tx_rx_pairs = \
+            init_aes_txrx_pairs(self.data_to_transfer, self.on_data_rx, update_cipher_on_packet_drop)
         self.finished = False
         self.current_aes_mode_idx = 0
 
