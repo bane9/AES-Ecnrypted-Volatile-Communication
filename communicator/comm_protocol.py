@@ -11,6 +11,7 @@ from aes import AES_CFB
 from aes import AES_CTR
 from aes import AES_GCM
 from aes import AES_OFB
+from aes import AES_XTS
 
 
 class Transmitter:
@@ -345,6 +346,7 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
 
     out = {}
     key = AES.generate_secure_key()
+    xts_key = key + AES.generate_secure_key()
 
     out["ecb"] = TxRxPair(
         Transmitter(
@@ -419,6 +421,21 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
         )
     )
 
+    out["xts"] = TxRxPair(
+        Transmitter(
+            aes=AES_XTS(key=xts_key, mode=AES.AES_MODE.ENCRYPTOR),
+            data_to_transmit=data_to_transmit,
+            aes_fields_on_init=["tweak"],
+        ),
+        Receiver(
+            aes=AES_XTS(key=xts_key, mode=AES.AES_MODE.DECRYPTOR),
+            data_received_cb=data_rx_cb,
+            error_protocol=Receiver.RxFailureException.ErrorProtocol.RETRANSMIT,
+            aes_fields_on_init=["tweak"],
+            update_cipher_on_packet_drop=update_cipher_on_packet_drop
+        )
+    )
+
     out["gcm"] = TxRxPair(
         Transmitter(
             aes=AES_GCM(key=key, mode=AES.AES_MODE.ENCRYPTOR),
@@ -435,5 +452,8 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
             update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )
     )
+
+    # XTS is not useful for this project
+    out.pop("xts")
 
     return out

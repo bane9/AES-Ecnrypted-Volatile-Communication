@@ -54,12 +54,12 @@ class AES_GCM(AES):
         """
 
         if self.mode == AES.AES_MODE.ENCRYPTOR:
-            self.data += self.context.finalize()
+            data = self.context.finalize()
             self.tag = self.context.tag
         else:
-            self.context.finalize_with_tag(self.tag)
+            data = self.context.finalize_with_tag(self.tag)
 
-        return self.data
+        return data
 
     def set_tag(self, tag: bytes):
         """Set the tag for the GCM instance.

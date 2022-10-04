@@ -9,6 +9,7 @@ from ..aes_ctr import AES_CTR
 from ..aes_gcm import AES_GCM
 from ..aes_cfb import AES_CFB
 from ..aes_ofb import AES_OFB
+from ..aes_xts import AES_XTS
 
 PLAIN_TEXT = os.urandom(AES.AES_BYTE_LENGTH * 12)
 
@@ -20,37 +21,36 @@ def aes_algorithms_test():
     assert len(PLAIN_TEXT) % AES.AES_BYTE_LENGTH == 0
     assert len(PLAIN_TEXT_DOUBLE) % AES.AES_BYTE_LENGTH == 0
 
-    aes_algorithms: list[AES] = [AES_ECB, AES_CBC, AES_CTR, AES_CFB, AES_OFB, AES_GCM]
+    aes_algorithms: list[AES] = [AES_ECB, AES_CBC, AES_CTR, AES_CFB, AES_OFB, AES_GCM, AES_XTS]
 
     for algorithm in aes_algorithms:
         # Single pass
         print(f"Testing {algorithm.__name__} single pass")
 
-        aes: AES = algorithm(mode=AES_ECB.AES_MODE.ENCRYPTOR)
+        aes: AES = algorithm(mode=AES.AES_MODE.ENCRYPTOR)
 
-        aes.update(PLAIN_TEXT)
-        encrypted = aes.finalize()
+        encrypted = aes.update(PLAIN_TEXT) + aes.finalize()
 
-        aes.set_mode(AES_ECB.AES_MODE.DECRYPTOR)
-        aes.update(encrypted)
+        aes.set_mode(AES.AES_MODE.DECRYPTOR)
 
-        decrypted = aes.finalize()
+        decrypted = aes.update(encrypted) + aes.finalize()
         assert decrypted == PLAIN_TEXT
 
         # Double pass
         print(f"Testing {algorithm.__name__} double pass")
 
-        aes: AES = algorithm(mode=AES_ECB.AES_MODE.ENCRYPTOR)
+        aes: AES = algorithm(mode=AES.AES_MODE.ENCRYPTOR)
 
-        aes.update(PLAIN_TEXT)
-        aes.update(PLAIN_TEXT)
-        encrypted = aes.finalize()
+        encrypted = aes.update(PLAIN_TEXT)
+        encrypted += aes.update(PLAIN_TEXT)
+        encrypted += aes.finalize()
 
-        aes.set_mode(AES_ECB.AES_MODE.DECRYPTOR)
-        aes.update(encrypted)
+        aes.set_mode(AES.AES_MODE.DECRYPTOR)
 
-        decrypted = aes.finalize()
-        assert decrypted == PLAIN_TEXT_DOUBLE
+        decrypted = aes.update(encrypted) + aes.finalize()
+
+        if algorithm != AES_XTS:
+            assert decrypted == PLAIN_TEXT_DOUBLE
 
 def test_aes_128():
     """Test all of the AES classes with a 128 bit length.
@@ -61,10 +61,6 @@ def test_aes_128():
 
 def test_aes_256():
     """Test all of the AES classes with a 256 bit length.
-    After this test is done, it will set the global bit length back
-    to 128 bit.
     """
     AES.set_bit_length(256)
     aes_algorithms_test()
-
-    AES.set_bit_length(128)

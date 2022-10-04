@@ -13,7 +13,7 @@ class AES(ABC):
 
     AES_BIT_LENGTH: int
     AES_BYTE_LENGTH: int
-    CIPHER_ALGORITHM: algorithms.AES128 or algorithms.AES256
+    CIPHER_ALGORITHM = algorithms.AES
 
     AES_IV_BYTE_LENGTH = 16
     AES_NONCE_BYTE_LENGTH = 16
@@ -59,8 +59,6 @@ class AES(ABC):
         self.iv = iv
         self.nonce = nonce
 
-        self.data: bytes = None
-
         self.cipher: Cipher = None
         self.context: CipherContext = None
 
@@ -89,8 +87,6 @@ class AES(ABC):
             self.context = self.cipher.encryptor()
         elif mode == AES.AES_MODE.DECRYPTOR:
             self.context = self.cipher.decryptor()
-
-        self.data = bytes()
 
         self.mode = mode
 
@@ -164,11 +160,7 @@ class AES(ABC):
         """
         cls.AES_BYTE_LENGTH = bit_length // 8
 
-        if bit_length == 128:
-            cls.CIPHER_ALGORITHM = algorithms.AES128
-        elif bit_length == 256:
-            cls.CIPHER_ALGORITHM = algorithms.AES256
-        else:
+        if bit_length != 128 and bit_length != 256:
             raise ValueError(f"Invalid AES bit length configuration {bit_length}. "
                              "Supported bit lengths are 128 and 256.")
 

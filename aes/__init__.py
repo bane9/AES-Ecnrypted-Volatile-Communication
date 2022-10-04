@@ -8,3 +8,4 @@ from .aes_ctr import AES_CTR
 from .aes_ecb import AES_ECB
 from .aes_gcm import AES_GCM
 from .aes_ofb import AES_OFB
+from .aes_xts import AES_XTS
