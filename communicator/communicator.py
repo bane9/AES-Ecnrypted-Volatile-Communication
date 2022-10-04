@@ -28,7 +28,8 @@ class Communicator:
             If left empty, all of them will be tested. Defaults to None.
             message_fail_rate_percent (float, optional): Message failure percentage
             that will be present during the communication. Defaults to 1.0.
-            use_retransmission (bool, optional): Retransmit packets in case of their failure. Defaults to False.
+            use_retransmission (bool, optional): Retransmit packets in case of their failure.
+            Defaults to False.
             update_cipher_on_packet_drop (bool, optional): Update AES cipher contexts on failed packets.
             Defaults to True.
         """

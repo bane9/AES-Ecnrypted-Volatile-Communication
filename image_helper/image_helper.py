@@ -61,6 +61,26 @@ class ImageHelper:
         return bytes(np.array(image).flatten())
 
     @classmethod
+    def _bytes_to_image(cls, data: bytes, width: int,
+                        height: int, channels: int) -> Image:
+        """Deserialize an raw image buffer .
+
+        Args:
+            data (bytes): Serialized image
+            width (int): Width of the serialized image
+            height (int): Height of the serialized image
+            channels (int): Number of channels the serialized image has
+
+        Returns:
+            bytes: deserialized image
+        """
+
+        data = data[:width * height * channels]
+
+        data = np.frombuffer(data, dtype=np.uint8).reshape((height, width, channels))
+        return Image.fromarray(data)
+
+    @classmethod
     def save_bytes_as_image(cls, data: bytes, path: str, width: int,
                             height: int, channels: int):
         """Save serialized image as a proper image.
@@ -75,13 +95,9 @@ class ImageHelper:
 
         path = os.path.join(Summarizer.SAVE_FOLDER, path)
 
-        data = data[:width * height * channels]
-
-        data = np.frombuffer(data, dtype=np.uint8).reshape((height, width, channels))
-
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
-        img = Image.fromarray(data)
+        img = cls._bytes_to_image(data, width, height, channels)
         img.putalpha(255)
 
         img.save(path, subsampling=0, quality=100)
