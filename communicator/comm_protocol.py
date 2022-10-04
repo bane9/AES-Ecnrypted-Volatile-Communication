@@ -1,4 +1,4 @@
-"""_summary_
+"""AES communication configuration module
 """
 
 from enum import Enum, unique
@@ -14,18 +14,20 @@ from aes import AES_OFB
 
 
 class Transmitter:
-    """_summary_
+    """AES communication transmitter class
     """
 
     def __init__(self, aes: AES, data_to_transmit: bytes,
                  aes_fields_on_init: list[str] = None, aes_fields_on_tx: list[str] = None):
-        """_summary_
-
+        """
         Args:
-            aes (AES): _description_
-            data_to_transmit (bytes): _description_
-            aes_fields_on_init (list[str], optional): _description_. Defaults to None.
-            aes_fields_on_tx (list[str], optional): _description_. Defaults to None.
+            aes (AES): AES instance in encryptor mode that will be used.
+            data_to_transmit (bytes): Data that will be transmitted.
+            aes_fields_on_init (list[str], optional): Which fields
+            from the AES instance will be used when creating a initialization
+            message. Defaults to None.
+            aes_fields_on_tx (list[str], optional): Which fields
+            from the AES instance will be used when creating a tx message. Defaults to None.
         """
 
         self.aes = aes
@@ -45,7 +47,7 @@ class Transmitter:
             self.fields_on_tx = []
 
     def reset(self):
-        """_summary_
+        """Reset the transmitter instance
         """
 
         self.aes.reset()
@@ -59,10 +61,10 @@ class Transmitter:
         assert len(self.encrypted_data) == self.data_size_padded
 
     def gen_init_message(self) -> dict[str, int or str or bytes]:
-        """_summary_
+        """Generate an initialization message for the receiver
 
         Returns:
-            dict[str, int or str or bytes]: _description_
+            dict[str, int or str or bytes]: Initialization message
         """
 
         self.reset()
@@ -76,10 +78,10 @@ class Transmitter:
         return msg
 
     def gen_tx_message(self) -> dict[str, bytes] or None:
-        """_summary_
+        """Generate an TX message for the receiver
 
         Returns:
-            dict[str, bytes]: _description_
+            dict[str, bytes]: TX message
         """
 
         chunk_size = AES.AES_BYTE_LENGTH
@@ -99,26 +101,27 @@ class Transmitter:
         return msg
 
     def set_chunk(self, chunk: int):
-        """_summary_
+        """Set the chunk to be re-transmitted
 
         Args:
-            chunk (int): _description_
+            chunk (int): Chunk to be set
         """
 
         self.data_idx = chunk * AES.AES_BYTE_LENGTH
 
 
 class Receiver:
-    """_summary_
+    """AES communication receiver class
     """
 
     class RxFailureException(Exception):
-        """_summary_
+        """Exception thrown when the receiver detects communication
+        discrepancies
         """
 
         @unique
         class ErrorProtocol(Enum):
-            """_summary_
+            """Types of discrepancies the receiver class can detect
             """
 
             REINIT = 0
@@ -126,12 +129,12 @@ class Receiver:
 
         def __init__(self, error_protocol: ErrorProtocol,
                      chunk: int, message=""):
-            """_summary_
-
+            """
             Args:
-                error_protocol (ErrorProtocol): _description_
-                chunk (int): _description_
-                message (str, optional): _description_. Defaults to "".
+                error_protocol (ErrorProtocol): Type of detected discrepancy
+                chunk (int): Chunk where the discrepancy was found
+                message (str, optional): Any additional message
+                to add to the error. Defaults to "".
             """
 
             self.error_protocol = error_protocol
@@ -150,15 +153,22 @@ class Receiver:
                  aes_fields_on_init: list[str] = None,
                  aes_fields_on_rx: list[str] = None,
                  update_cipher_on_packet_drop=True):
-        """_summary_
-
+        """
         Args:
-            aes (AES): _description_
-            data_received_cb (Callable[[bytes, bytes, int], None]): _description_
-            error_protocol (RxFailureException.ErrorProtocol, optional): _description_. Defaults to None.
-            aes_fields_on_init (list[str], optional): _description_. Defaults to None.
-            aes_fields_on_rx (list[str], optional): _description_. Defaults to None.
-            update_cipher_on_packet_drop (bool, optional): _description_. Defaults to True.
+            aes (AES): AES instance in decryptor mode that will be used.
+            data_received_cb (Callable[[bytes, bytes, int], None]): Callback instance
+            that will receive the decrypted data.
+            error_protocol (RxFailureException.ErrorProtocol, optional): What course
+            of action will the receiver class perform in the case it detects a discrepancy.
+            Defaults to None.
+            aes_fields_on_init (list[str], optional): Which fields to set
+            to the AES instance from fields available in the init message. Defaults to None.
+            aes_fields_on_rx (list[str], optional): Which fields to set
+            to the AES instance from fields available in the init message. Defaults to None.
+            Defaults to None.
+            update_cipher_on_packet_drop (bool, optional): If set to true and in the case of a
+            detected discrepancy, the AES context will be provided with chunks of zero's
+            to decrypt for as many chunks as are detected to be missing. Defaults to True.
         """
 
         self.aes = aes
@@ -181,7 +191,7 @@ class Receiver:
             self.fields_on_rx = []
 
     def reset(self):
-        """_summary_
+        """Reset the receiver context
         """
 
         self.aes.reset()
@@ -192,10 +202,10 @@ class Receiver:
         self.current_chunk = 0
 
     def on_init_msg(self, init_msg: dict[str, int or str or bytes]):
-        """_summary_
+        """Process the init message from the transmitter
 
         Args:
-            init_msg (dict[str, int or str or bytes]): _description_
+            init_msg (dict[str, int or str or bytes]): Init message
         """
 
         self.data_size_to_receive = init_msg["message_size"]
@@ -207,11 +217,11 @@ class Receiver:
         self.aes.reset()
 
     def _append_data(self, data: bytes, data_encrypted: bytes):
-        """_summary_
+        """Append decrypted data (or zero padding)
 
         Args:
-            data (bytes): _description_
-            data_encrypted (bytes): _description_
+            data (bytes): Data chunk to be appended
+            data_encrypted (bytes): Encrypted chunk to be appended
         """
 
         self.received_data += data
@@ -228,11 +238,12 @@ class Receiver:
             self.data_received_cb(self.received_data, data, bytes_remaining)
 
     def _recover_by_padding(self, rx_data: dict[str, int or bytes], already_decrypted: bool):
-        """_summary_
+        """Pad the buffers (and the cipher context if self.update_cipher_on_packet_drop == True)
+        with chunks filled with zero's
 
         Args:
-            rx_data (dict[str, int or bytes]): _description_
-            already_decrypted (bool): _description_
+            rx_data (dict[str, int or bytes]): TX message
+            already_decrypted (bool): Flag to know if the cipher context was already updated or not
         """
         chunks_missing = rx_data["chunk"] - self.current_chunk
         last_chunk = self.current_chunk + chunks_missing == self.data_size_to_receive // AES.AES_BYTE_LENGTH
@@ -257,15 +268,17 @@ class Receiver:
                 self._append_data(decrypted, rx_data["data"])
 
     def on_data_rx(self, rx_data: dict[str, int or bytes], pad_on_failure=False):
-        """_summary_
+        """Process a TX message from the transmitter
 
         Args:
-            rx_data (dict[str, int or bytes]): _description_
-            pad_on_failure (bool, optional): _description_. Defaults to False.
+            rx_data (dict[str, int or bytes]): TX message
+            pad_on_failure (bool, optional): Add zero padding in the case
+            a discrepancy is detected. Defaults to False.
 
         Raises:
-            Receiver.RxFailureException: _description_
-            Receiver.RxFailureException: _description_
+            Receiver.RxFailureException: In the case chunks are detected missing
+            Receiver.RxFailureException: In the case the decrypted data is detected
+            to be invalid
         """
 
         try:
@@ -296,15 +309,15 @@ class Receiver:
             raise
 
 class TxRxPair:
-    """_summary_
+    """A pair of Transmitter and Receiver classes with the same
+    AES class mode that share the same key
     """
 
     def __init__(self, transmitter: Transmitter, receiver: Receiver):
-        """_summary_
-
+        """
         Args:
-            transmitter (Transmitter): _description_
-            receiver (Receiver): _description_
+            transmitter (Transmitter): Transmitter instance
+            receiver (Receiver): Receiver instance
         """
 
         self.transmitter = transmitter
@@ -314,14 +327,20 @@ class TxRxPair:
 def init_aes_txrx_pairs(data_to_transmit: bytes,
                         data_rx_cb: Callable[[bytes, bytes, int], None] = None,
                         update_cipher_on_packet_drop: bool = True) -> dict[str, TxRxPair]:
-    """_summary_
+    """Initialize TxRxPair instances with all implemented AES classes
 
     Args:
-        data_to_transmit (bytes): _description_
-        data_rx_cb (Callable[[bytes, bytes, int], None], optional): _description_. Defaults to None.
+        data_to_transmit (bytes): data that will be transmitted between
+        Transmitters and Receivers
+        data_rx_cb (Callable[[bytes, bytes, int], None], optional): Callback
+        that will be used for the Receiver. Defaults to None.
+        update_cipher_on_packet_drop (bool, optional): If the receiver
+        should update the cipher it's cipher context in the case it
+        detects discrepancies. Defaults to True.
 
     Returns:
-        dict[str, TxRxPair]: _description_
+        dict[str, TxRxPair]: Dictionary will key being the name of the
+        AES class and the value being the relevant TxRx instance
     """
 
     out = {}

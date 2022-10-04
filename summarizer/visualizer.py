@@ -1,4 +1,4 @@
-"""_summary_
+"""Visualizer module for creating timeline graphs
 """
 
 import os
@@ -11,7 +11,7 @@ from sortedcontainers import SortedDict
 
 
 class Visualizer:
-    """_summary_
+    """Visualizer class for creating timeline graphs
     """
 
     IMAGE_FILENAME = "timeline.png"
@@ -21,10 +21,12 @@ class Visualizer:
 
     @classmethod
     def begin(cls, save_folder_path: str):
-        """_summary_
+        """Initialize a new visualization context
 
         Args:
-            save_folder_path (str): _description_
+            save_folder_path (str): Path to the folder which
+            the visualization graph image will be saved.
+            The folder will be created if it doesn't exist.
         """
 
         cls.save_path = save_folder_path + "/" + cls.IMAGE_FILENAME
@@ -36,10 +38,19 @@ class Visualizer:
 
     @classmethod
     def add_all_event_names(cls, event_names: list[str]):
-        """_summary_
+        """Add event names so they can be mapped to certain colors.
+        The current color mapping is:
+        event_names[0] = blue
+        event_names[1] = orange
+        event_names[2] = green
+        event_names[3] = red
+        event_names[4] = purple
+        event_names[5] = brown
+
+        If len(event_names) is larger than 6, an error will be thrown
 
         Args:
-            event_names (list[str]): _description_
+            event_names (list[str]): List of event names
         """
 
         available_colors = (
@@ -56,12 +67,12 @@ class Visualizer:
 
     @classmethod
     def add_event(cls, event_begin: int, event_end: int, event_name: str):
-        """_summary_
+        """Add an event to the event context
 
         Args:
-            event_begin (int): _description_
-            event_end (int): _description_
-            event_name (str): _description_
+            event_begin (int): Timestamp of when the event began
+            event_end (int): Timestamp of when the event ended
+            event_name (str): Name of the event
         """
 
         cls.data["evt_start"].append(event_begin)
@@ -70,14 +81,15 @@ class Visualizer:
 
     @classmethod
     def _generate_bar_plot(cls, data: dict[str, float or str], y_offset=0.0) -> PolyCollection:
-        """_summary_
+        """Generate a collection of polygons that represent the timeline
+        of events
 
         Args:
-            data (dict[str, float or str]): _description_
-            y_offset (float, optional): _description_. Defaults to 0.0.
+            data (dict[str, float or str]): Events to be plotted
+            y_offset (float, optional): y offset in the graph for the bar plot. Defaults to 0.0.
 
         Returns:
-            PolyCollection: _description_
+            PolyCollection: Collection of polygons to be drawn
         """
 
         start = data["evt_start"]
@@ -107,11 +119,13 @@ class Visualizer:
 
     @classmethod
     def end(cls, plot_title="", additional_data=""):
-        """_summary_
+        """End the visualization context. It will draw the timeline plot
+        with given events and other data.
 
         Args:
-            plot_title (str, optional): _description_. Defaults to "".
-            additional_data (str, optional): _description_. Defaults to "".
+            plot_title (str, optional): Title of the plot. Defaults to "".
+            additional_data (str, optional): Any additional data
+            relevant to the plot. Defaults to "".
         """
 
         os.makedirs(os.path.dirname(cls.save_path), exist_ok=True)
@@ -154,10 +168,12 @@ class Visualizer:
 
     @classmethod
     def generate_comparative_plot(cls, additional_data=""):
-        """_summary_
+        """Takes all generated plots saved in the current output folder
+        and combines them into one plot.
 
         Args:
-            additional_data (str, optional): _description_. Defaults to "".
+            additional_data (str, optional): Any additional data relevant
+            the the shared plot. Defaults to "".
         """
 
         path = os.path.dirname(cls.save_path)

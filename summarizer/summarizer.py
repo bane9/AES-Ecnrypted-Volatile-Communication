@@ -1,4 +1,4 @@
-"""_summary_
+"""Event summarizer module for creating timeline graphs
 """
 
 from enum import Enum, unique
@@ -8,14 +8,14 @@ import pickle
 from .visualizer import Visualizer
 
 class Summarizer:
-    """_summary_
+    """Event summarizer class for creating timeline graphs
     """
 
     SAVE_FOLDER = "output/" + datetime.datetime.now().strftime("%H-%M-%S %d.%m.%Y")
 
     @unique
     class EventType(Enum):
-        """_summary_
+        """Possible event types
         """
 
         BEGIN = 0
@@ -27,20 +27,19 @@ class Summarizer:
 
 
     class Event:
-        """_summary_
+        """A class containing all the info relevant to an event
         """
 
         def __init__(self, event_type: "Summarizer.EventType", timestamp: int = None, additional_data = ""):
-            """_summary_
-
+            """
             Args:
-                event_type (str): _description_
-                timestamp (int, optional): _description_. Defaults to None.
-                additional_data (str, optional): _description_. Defaults to "".
+                event_type (Summarizer.EventType): Type of the event
+                timestamp (int, optional): Unix timestamp of when the event began. Defaults to None.
+                additional_data (str, optional): Unix timestamp of when the event ended. Defaults to "".
             """
 
             self.timestamp = self.timestamp if timestamp is not None else Summarizer.get_current_time()
-            self.end_timestamp = 0
+            self.end_timestamp = self.timestamp + 1
             self.event_type = event_type
             self.additional_data = additional_data
 
@@ -52,7 +51,10 @@ class Summarizer:
 
     @classmethod
     def start(cls, aes_mode: str):
-        """_summary_
+        """Start the summarizer context
+
+        Args:
+            aes_mode (str): Name of the AES mode currently being tested
         """
 
         cls.current_aes_mode = aes_mode
@@ -62,10 +64,10 @@ class Summarizer:
 
     @classmethod
     def _new_evt(cls, event_type: "Summarizer.EventType"):
-        """_summary_
+        """Add an event to the event list
 
         Args:
-            event_type (Summarizer.EventType): _description_
+            event_type (Summarizer.EventType): Type of the event
         """
 
         evt_list = cls.events[cls.current_aes_mode]
@@ -82,7 +84,9 @@ class Summarizer:
 
     @classmethod
     def _busy_wait(cls):
-        """_summary_
+        """Used for adding a small delay after certain events happen.
+        It fixes some events not lasting long enough to be properly
+        rendered in the visualizer.
         """
 
         if not cls.BUSY_WAIT_AMOUNT_MS:
@@ -95,14 +99,14 @@ class Summarizer:
 
     @classmethod
     def on_begin(cls):
-        """_summary_
+        """Create a begin event
         """
 
         # cls._new_evt(cls.EventType.BEGIN)
 
     @classmethod
     def on_dropped_packet(cls):
-        """_summary_
+        """Create a dropped packet event
         """
 
         cls._new_evt(cls.EventType.PACKET_DROP)
@@ -110,7 +114,7 @@ class Summarizer:
 
     @classmethod
     def on_packet_retransmit(cls):
-        """_summary_
+        """Create a packet retransmit event
         """
 
         cls._new_evt(cls.EventType.PACKET_RETRANSMIT)
@@ -118,7 +122,7 @@ class Summarizer:
 
     @classmethod
     def on_connection_reset(cls):
-        """_summary_
+        """Create a connection reset event
         """
 
         cls._new_evt(cls.EventType.CONNECTION_RESET)
@@ -126,14 +130,18 @@ class Summarizer:
 
     @classmethod
     def on_packet_transmit(cls):
-        """_summary_
+        """Create a packet transmit event
         """
 
         cls._new_evt(cls.EventType.PACKET_TRANSMIT)
 
     @classmethod
     def end(cls, fail_rate: float = None):
-        """_summary_
+        """End the summarizer contexr
+
+        Args:
+            fail_rate (float, optional): Measurer fail rate of the
+            current test. Defaults to None.
         """
 
         # cls._new_evt(cls.EventType.END)
@@ -143,7 +151,8 @@ class Summarizer:
 
     @classmethod
     def _draw_timeline(cls, fail_rate: float or None):
-        """_summary_
+        """Sets up the Visualizer context and uses it to draw a timeline
+        graph
         """
 
         Visualizer.begin(cls.SAVE_FOLDER + "/" + cls.current_aes_mode)

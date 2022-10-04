@@ -1,4 +1,4 @@
-"""_summary_
+"""AES Volatile Communicator module
 """
 
 import random
@@ -9,8 +9,9 @@ from .comm_protocol import Receiver, TxRxPair, init_aes_txrx_pairs
 
 
 class Communicator:
-    """_summary_
+    """AES Volatile Communicator class
     """
+
 
     def __init__(self,
                  path_to_image = "",
@@ -18,14 +19,18 @@ class Communicator:
                  message_fail_rate_percent = 1.0,
                  use_retransmission=False,
                  update_cipher_on_packet_drop=True):
-        """_summary_
-
+        """
         Args:
-            path_to_image (str, optional): _description_. Defaults to "".
-            aes_modes_to_test (list[str], optional): _description_. Defaults to None.
-            message_fail_rate_percent (float, optional): _description_. Defaults to 1.0.
-            use_retransmission (bool, optional): _description_. Defaults to False.
-            update_cipher_on_packet_drop (bool, optional): _description_. Defaults to True.
+            path_to_image (str, optional): Path to image that will be
+            transmitted. If left empty, default one provided by the ImageHelper module
+            will be used. Defaults to "".
+            aes_modes_to_test (list[str], optional): List of aes modes to test.
+            If left empty, all of them will be tested. Defaults to None.
+            message_fail_rate_percent (float, optional): Message failure percentage
+            that will be present during the communication. Defaults to 1.0.
+            use_retransmission (bool, optional): Retransmit packets in case of their failure. Defaults to False.
+            update_cipher_on_packet_drop (bool, optional): Update AES cipher contexts on failed packets.
+            Defaults to True.
         """
 
         assert 0 <= message_fail_rate_percent <= 100
@@ -51,15 +56,13 @@ class Communicator:
 
     def on_data_rx(self, all_received_data: bytes, _: bytes,
                    remaining_bytes_to_receive: int):
-        """_summary_
+        """Callback tied to the Receiver class. It is used to process
+        the received data.
 
         Args:
-            all_received_data (bytes): _description_
-            received_chunk (bytes): _description_
-            remaining_bytes_to_receive (int): _description_
-
-        Raises:
-            ValueError: _description_
+            all_received_data (bytes): All of the received decrypted data
+            received_chunk (bytes): Current decrypted chunk
+            remaining_bytes_to_receive (int): How many bytes receiver still has left
         """
 
         if len(all_received_data) % ((len(self.data_to_transfer) * 0.05)) == 0:
@@ -90,7 +93,7 @@ class Communicator:
             self.finished = True
 
     def test_aes_modes(self):
-        """_summary_
+        """Test AES modes with settings provided in the constructor
         """
 
         i = 0
@@ -131,13 +134,13 @@ class Communicator:
                                              f"Set fail rate: {self.message_fail_percent / 1000}%")
 
     def _test_aes_mode(self, txrx_pair: TxRxPair) -> bool:
-        """_summary_
+        """Test a specific AES mode
 
         Args:
-            txrx_pair (TxRxPair): _description_
+            txrx_pair (TxRxPair): TxRxPair with a specific AES instance
 
         Returns:
-            bool: _description_
+            bool: If False, then the same AES instance will be tested again.
         """
 
         init_msg = txrx_pair.transmitter.gen_init_message()

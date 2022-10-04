@@ -7,10 +7,10 @@ from aes import AES
 
 
 def parse_args() -> argparse.Namespace:
-    """_summary_
+    """Builds CLI argument list and parses it
 
     Returns:
-        argparse.ArgumentParser: _description_
+        argparse.Namespace: Parsed arguments
     """
 
     arg = argparse.ArgumentParser()

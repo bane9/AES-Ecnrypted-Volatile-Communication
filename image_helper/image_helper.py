@@ -1,4 +1,5 @@
-"""_summary_
+"""Module dedicated to image loading/saving and it's serialization
+and deserialization.
 """
 
 import os
@@ -8,21 +9,23 @@ from summarizer import Summarizer
 
 
 class ImageHelper:
-    """_summary_
+    """Class dedicated to image loading/saving and it's serialization
+    and deserialization.
     """
 
-    EXAMPLE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "example.png")
+    EXAMPLE_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "example.jpg")
 
     @classmethod
     def load_image(cls, path: str, copy_to_output_folder=False) -> Image:
-        """_summary_
+        """Load an image
 
         Args:
-            path (str): _description_
-            copy_to_output_folder (bool, optional): _description_. Defaults to False.
+            path (str): Path to the image
+            copy_to_output_folder (bool, optional): If set to True
+            the loaded image will be copied to the output folder currently in use. Defaults to False.
 
         Returns:
-            Image: _description_
+            Image: PIL Image instance
         """
 
         img = Image.open(path)
@@ -36,23 +39,23 @@ class ImageHelper:
 
     @classmethod
     def get_default_image(cls) -> Image:
-        """_summary_
+        """Loads the image located in ImageHelper.EXAMPLE_IMAGE_PATH path
 
         Returns:
-            Image: _description_
+            Image: PIL Image instance
         """
 
         return cls.load_image(cls.EXAMPLE_IMAGE_PATH, True)
 
     @classmethod
     def image_to_bytes(cls, image: Image) -> bytes:
-        """_summary_
+        """Convert an Image instance to flat bytes array
 
         Args:
-            image (Image): _description_
+            image (Image): PIL Image instance
 
         Returns:
-            bytes: _description_
+            bytes: Serialized image
         """
 
         return bytes(np.array(image).flatten())
@@ -60,14 +63,14 @@ class ImageHelper:
     @classmethod
     def save_bytes_as_image(cls, data: bytes, path: str, width: int,
                             height: int, channels: int):
-        """_summary_
+        """Save serialized image as a proper image.
 
         Args:
-            data (bytes): _description_
-            path (str): _description_
-            width (int): _description_
-            height (int): _description_
-            channels (int): _description_
+            data (bytes): Serialized image
+            path (str): Path to save it to
+            width (int): Width of the serialized image
+            height (int): Height of the serialized image
+            channels (int): Number of channels the serialized image has
         """
 
         path = os.path.join(Summarizer.SAVE_FOLDER, path)
