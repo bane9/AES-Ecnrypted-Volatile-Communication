@@ -89,8 +89,8 @@ Then run the program:
 The available command line options are:
 
 ```
-usage: main.py [-h] --fail-percent FAIL_PERCENT [--image-path IMAGE_PATH] [--use-retransmission USE_RETRANSMISSION] [--update-cipher-on-packet-drop UPDATE_CIPHER_ON_PACKET_DROP]
-               [--aes-bit-length {128,256}] [--aes-alg AES_ALG]
+usage: main.py [-h] --fail-percent FAIL_PERCENT [--image-path IMAGE_PATH] [--use-retransmission USE_RETRANSMISSION] [--update-cipher-on-packet-drop | --no-update-cipher-on-packet-drop]
+               [--aes-bit-length {128,256}] [--aes-alg {ecb,cbc,cfb,ofb,ctr,gcm}]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -100,9 +100,10 @@ optional arguments:
                         Path to the image that will be transmitted
   --use-retransmission USE_RETRANSMISSION
                         Use retransmission on packet failure. If set to false, the missing packets will be padded with zero's
-  --update-cipher-on-packet-drop UPDATE_CIPHER_ON_PACKET_DROP
-                        Enable or disable the receiver updating it's cipher with zero's when a dropped packet is detected
+  --update-cipher-on-packet-drop, --no-update-cipher-on-packet-drop
+                        Enable or disable the receiver updating it's cipher with zero's when a dropped packet is detected (default: True)
   --aes-bit-length {128,256}
                         AES bit length
-  --aes-alg AES_ALG     AES algorithm to test
+  --aes-alg {ecb,cbc,cfb,ofb,ctr,gcm}
+                        AES algorithm to test. This argument can be provided multiple times.
 ```

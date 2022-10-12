@@ -249,7 +249,7 @@ class Receiver:
         chunks_missing = rx_data["chunk"] - self.current_chunk
         last_chunk = self.current_chunk + chunks_missing == self.data_size_to_receive // AES.AES_BYTE_LENGTH
 
-        zerod_chunk = b"0" * AES.AES_BYTE_LENGTH
+        zerod_chunk = b"\0" * AES.AES_BYTE_LENGTH
 
         if already_decrypted:
             self._append_data(zerod_chunk, zerod_chunk)
@@ -440,14 +440,14 @@ def init_aes_txrx_pairs(data_to_transmit: bytes,
         Transmitter(
             aes=AES_GCM(key=key, mode=AES.AES_MODE.ENCRYPTOR),
             data_to_transmit=data_to_transmit,
-            aes_fields_on_init=["iv", "nonce"],
+            aes_fields_on_init=["iv"],
             aes_fields_on_tx=["tag"]
         ),
         Receiver(
             aes=AES_GCM(key=key, mode=AES.AES_MODE.DECRYPTOR),
             data_received_cb=data_rx_cb,
             error_protocol=Receiver.RxFailureException.ErrorProtocol.REINIT,
-            aes_fields_on_init=["iv", "nonce"],
+            aes_fields_on_init=["iv"],
             aes_fields_on_rx=["tag"],
             update_cipher_on_packet_drop=update_cipher_on_packet_drop
         )

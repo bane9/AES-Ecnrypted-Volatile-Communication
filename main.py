@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
                     default=False)
 
     arg.add_argument("--update-cipher-on-packet-drop",
-                    type=bool,
+                    action=argparse.BooleanOptionalAction,
                     help="Enable or disable the receiver updating it's"
                     " cipher with zero's when a dropped packet is detected",
                     required=False,
@@ -49,7 +49,8 @@ def parse_args() -> argparse.Namespace:
 
     arg.add_argument("--aes-alg",
                     type=str,
-                    help="AES algorithm to test",
+                    help="AES algorithm to test. This argument can be provided multiple times.",
+                    choices=["ecb", "cbc", "cfb", "ofb", "ctr", "gcm"],
                     action="append",
                     required=False)
 
